@@ -1,36 +1,51 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# PRoof — Personal Workout PWA
 
-## Getting Started
+Mobile-first workout tracker (Next.js App Router, TypeScript, Neon PostgreSQL, Drizzle ORM, Tailwind).
 
-First, run the development server:
+## Setup
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+1. **Database** — Schema and seed are in `sql/`. You’ve already run these against Neon.
+
+2. **Environment** — Create `.env.local`:
+
+```env
+DATABASE_URL=postgresql://...
+OPENAI_API_KEY=sk-...
+NEXT_PUBLIC_VAPID_PUBLIC_KEY=...
+VAPID_PRIVATE_KEY=...
+VAPID_SUBJECT=mailto:you@example.com
+CRON_SECRET=your-cron-secret
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Generate VAPID keys: `npx web-push generate-vapid-keys`
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+3. **Install & run**
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+npm install
+npm run dev
+```
 
-## Learn More
+Open [http://localhost:3000](http://localhost:3000) — redirects to **Today**.
 
-To learn more about Next.js, take a look at the following resources:
+## PWA (iPhone)
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+- Add to Home Screen from Safari
+- `manifest.json` + `public/sw.js` for install and push
+- Enable notifications in **Settings**
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Daily reminders (cron)
 
-## Deploy on Vercel
+Hit `/api/cron/reminders` with `Authorization: Bearer $CRON_SECRET` on a schedule (e.g. Vercel Cron) at the user’s `workout_reminders.remind_time`.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## User
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Single user: `CURRENT_USER_ID = 1` in `src/lib/config.ts`. No auth.
+
+## Features
+
+- Today tab: PPL 6-day program, deload weeks, weekly exercise rotation
+- Active workout: sets, warm-ups, RPE, rest timer, PR badges, AI coach, plate calculator
+- Progressive overload suggestions (stored in kg, displayed in lbs/kg)
+- History + clone session
+- Exercises library, AI chat, body check-in, data export (JSON/CSV)
