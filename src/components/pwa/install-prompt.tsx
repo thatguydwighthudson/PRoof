@@ -19,9 +19,6 @@ export function InstallPrompt() {
       setDeferred(e as BeforeInstallPromptEvent);
     };
     window.addEventListener("beforeinstallprompt", handler);
-    if (Notification.permission === "default") {
-      Notification.requestPermission().catch(() => {});
-    }
     return () => window.removeEventListener("beforeinstallprompt", handler);
   }, []);
 

@@ -7,6 +7,7 @@ type Diagnostics = Record<string, unknown>;
 
 export default function DebugPage() {
   const [info, setInfo] = useState<Diagnostics | null>(null);
+  const [step, setStep] = useState("starting");
 
   useEffect(() => {
     const run = async () => {
@@ -18,18 +19,22 @@ export default function DebugPage() {
         onLine: navigator.onLine,
       };
 
-      if ("serviceWorker" in navigator) {
-        const regs = await navigator.serviceWorker.getRegistrations();
-        base.serviceWorkers = regs.map((r) => ({
-          scope: r.scope,
-          active: r.active?.scriptURL ?? null,
-          waiting: r.waiting?.scriptURL ?? null,
-        }));
-        base.swController = navigator.serviceWorker.controller?.scriptURL ?? null;
-      } else {
-        base.serviceWorkers = "unsupported";
+      setStep("service-worker");
+      try {
+        if ("serviceWorker" in navigator) {
+          const regs = await navigator.serviceWorker.getRegistrations();
+          base.serviceWorkers = regs.map((r) => ({
+            scope: r.scope,
+            active: r.active?.scriptURL ?? null,
+          }));
+        } else {
+          base.serviceWorkers = "unsupported";
+        }
+      } catch (e) {
+        base.serviceWorkerError = e instanceof Error ? e.message : String(e);
       }
 
+      setStep("health");
       try {
         const health = await fetch("/api/health", { cache: "no-store" });
         base.healthStatus = health.status;
@@ -38,14 +43,7 @@ export default function DebugPage() {
         base.healthError = e instanceof Error ? e.message : String(e);
       }
 
-      try {
-        const user = await fetch("/api/user", { cache: "no-store" });
-        base.userStatus = user.status;
-        if (user.ok) base.user = await user.json();
-      } catch (e) {
-        base.userError = e instanceof Error ? e.message : String(e);
-      }
-
+      setStep("done");
       setInfo(base);
     };
 
@@ -56,14 +54,16 @@ export default function DebugPage() {
     <div className="min-h-screen bg-zinc-950 p-4 text-zinc-100">
       <h1 className="text-xl font-bold">PRoof debug</h1>
       <p className="mt-2 text-sm text-zinc-400">
-        Screenshot this page and share it. If this page also fails to load, the
-        problem is below React (network, DNS, or host).
+        Step: {step}. Screenshot this and share if /today still fails.
       </p>
-      <Link href="/today" className="mt-4 inline-block text-sm text-emerald-400">
-        ← Back to Today
+      <Link
+        href="/today"
+        className="mt-4 inline-block text-sm text-emerald-400"
+      >
+        ← Try Today
       </Link>
       <pre className="mt-4 overflow-x-auto rounded-xl bg-zinc-900 p-4 text-xs leading-relaxed text-zinc-300">
-        {info ? JSON.stringify(info, null, 2) : "Running checks…"}
+        {info ? JSON.stringify(info, null, 2) : `Running checks… (${step})`}
       </pre>
     </div>
   );
