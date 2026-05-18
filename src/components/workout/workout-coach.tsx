@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { motion } from "framer-motion";
 import { X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -15,7 +16,12 @@ export function WorkoutCoach({
   session: { id: number; isDeload: boolean };
   exercise: {
     exercise: { name: string };
-    sets: { reps: number | null; weightKg: number | null; rpe: number | null; isCompleted: boolean }[];
+    sets: {
+      reps: number | null;
+      weightKg: number | null;
+      rpe: number | null;
+      isCompleted: boolean;
+    }[];
     notes: string | null;
   };
   onClose: () => void;
@@ -53,30 +59,41 @@ export function WorkoutCoach({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex flex-col bg-zinc-950">
-      <div className="flex items-center justify-between border-b border-zinc-800 p-4">
-        <h2 className="font-bold">AI Coach</h2>
+    <motion.div
+      initial={{ y: "100%" }}
+      animate={{ y: 0 }}
+      exit={{ y: "100%" }}
+      className="fixed inset-0 z-50 flex flex-col bg-zinc-950"
+    >
+      <div className="flex items-center justify-between border-b border-zinc-800 px-4 py-4">
+        <div>
+          <h2 className="text-lg font-extrabold">🤖 Ask your coach</h2>
+          <p className="text-xs text-zinc-500">{exercise.exercise.name}</p>
+        </div>
         <button type="button" onClick={onClose} aria-label="Close">
-          <X className="h-6 w-6" />
+          <X className="h-6 w-6 text-zinc-400" />
         </button>
       </div>
       <div className="flex-1 space-y-3 overflow-y-auto p-4">
         {messages.length === 0 && (
-          <p className="text-sm text-zinc-500">
-            Ask about form, programming, or recovery for {exercise.exercise.name}.
+          <p className="rounded-2xl bg-zinc-900 p-4 text-sm text-zinc-400">
+            Form, cues, pacing — ask anything about{" "}
+            <strong className="text-zinc-200">{exercise.exercise.name}</strong>.
           </p>
         )}
         {messages.map((m, i) => (
-          <div
+          <motion.div
             key={i}
+            initial={{ opacity: 0, y: 6 }}
+            animate={{ opacity: 1, y: 0 }}
             className={
               m.role === "user"
-                ? "ml-8 rounded-xl bg-emerald-600/20 p-3 text-sm"
-                : "mr-8 rounded-xl bg-zinc-800 p-3 text-sm"
+                ? "ml-6 rounded-2xl border border-emerald-500/30 bg-emerald-600/20 p-3 text-sm"
+                : "mr-6 rounded-2xl bg-zinc-800 p-3 text-sm"
             }
           >
             {m.content}
-          </div>
+          </motion.div>
         ))}
       </div>
       <div className="flex gap-2 border-t border-zinc-800 p-4">
@@ -84,12 +101,13 @@ export function WorkoutCoach({
           value={input}
           onChange={(e) => setInput(e.target.value)}
           placeholder="Ask your coach…"
+          className="border-zinc-700 bg-zinc-900"
           onKeyDown={(e) => e.key === "Enter" && send()}
         />
         <Button onClick={send} disabled={loading}>
           Send
         </Button>
       </div>
-    </div>
+    </motion.div>
   );
 }

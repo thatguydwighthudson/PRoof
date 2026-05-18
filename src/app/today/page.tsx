@@ -11,15 +11,19 @@ export default async function TodayPage() {
   const active = await getActiveSessionOrNull();
 
   return (
-    <div className="px-4 pt-6">
+    <div className="bg-mesh min-h-screen px-4 pt-6">
       <header className="mb-6 flex items-center justify-between">
         <div>
-          <p className="text-sm text-zinc-500">Welcome back</p>
-          <h1 className="text-2xl font-bold tracking-tight">Today</h1>
+          <p className="text-xs font-bold uppercase tracking-[0.2em] text-zinc-500">
+            PRoof
+          </p>
+          <h1 className="text-3xl font-extrabold tracking-tight">
+            Today 🏋️
+          </h1>
         </div>
         <Link
           href="/settings"
-          className="flex h-11 w-11 items-center justify-center rounded-xl bg-zinc-900 text-zinc-400"
+          className="flex h-12 w-12 items-center justify-center rounded-2xl bg-zinc-900/80 text-zinc-400 ring-1 ring-zinc-800 transition hover:text-emerald-400"
           aria-label="Settings"
         >
           <Settings className="h-5 w-5" />

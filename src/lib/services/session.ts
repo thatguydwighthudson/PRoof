@@ -1,4 +1,4 @@
-import { and, desc, eq, isNull, ne } from "drizzle-orm";
+import { and, asc, desc, eq, isNull, ne } from "drizzle-orm";
 import { db } from "@/lib/db";
 import {
   workoutSessions,
@@ -19,6 +19,9 @@ import { getTodayPlan, advanceProgramDay } from "./program";
 import { getPendingSuggestion, markSuggestionApplied, computeOverloadSuggestions } from "./overload";
 import { updatePersonalRecords } from "./pr";
 import { getPreferredUnit } from "./user";
+import { parseDefaultReps } from "@/lib/parse-reps";
+
+export const USER_ADDED_MARKER = "__user_added__";
 
 export async function getActiveSessionOrNull() {
   const [session] = await db
@@ -259,8 +262,12 @@ export async function getSessionDetail(sessionId: number) {
         sessionId
       );
 
+      const isUserAdded = row.sessionExercise.notes === USER_ADDED_MARKER;
+
       return {
         ...row.sessionExercise,
+        notes: isUserAdded ? null : row.sessionExercise.notes,
+        isUserAdded,
         exercise: row.exercise,
         muscleGroup: row.muscleGroup,
         sets,
@@ -407,6 +414,114 @@ export async function logSet(
   }
 
   return set;
+}
+
+async function getPlanDefaultsForExercise(
+  exerciseId: number,
+  planId: number | null
+) {
+  if (planId) {
+    const [forPlan] = await db
+      .select()
+      .from(workoutPlanExercises)
+      .where(
+        and(
+          eq(workoutPlanExercises.exerciseId, exerciseId),
+          eq(workoutPlanExercises.planId, planId)
+        )
+      )
+      .limit(1);
+    if (forPlan) return forPlan;
+  }
+
+  const [anyPlan] = await db
+    .select()
+    .from(workoutPlanExercises)
+    .where(eq(workoutPlanExercises.exerciseId, exerciseId))
+    .orderBy(asc(workoutPlanExercises.id))
+    .limit(1);
+
+  return anyPlan ?? null;
+}
+
+export async function addSessionExercise(sessionId: number, exerciseId: number) {
+  const [session] = await db
+    .select()
+    .from(workoutSessions)
+    .where(eq(workoutSessions.id, sessionId))
+    .limit(1);
+
+  if (!session || session.endedAt) throw new Error("Invalid session");
+
+  const existing = await db
+    .select({ id: sessionExercises.id })
+    .from(sessionExercises)
+    .where(
+      and(
+        eq(sessionExercises.sessionId, sessionId),
+        eq(sessionExercises.exerciseId, exerciseId)
+      )
+    )
+    .limit(1);
+
+  if (existing.length > 0) throw new Error("Exercise already in session");
+
+  const sortRows = await db
+    .select({ sortOrder: sessionExercises.sortOrder })
+    .from(sessionExercises)
+    .where(eq(sessionExercises.sessionId, sessionId));
+
+  const maxSort = sortRows.reduce((m, r) => Math.max(m, r.sortOrder), -1);
+
+  const planDefaults = await getPlanDefaultsForExercise(
+    exerciseId,
+    session.planId
+  );
+
+  const defaultSets = planDefaults?.defaultSets ?? 3;
+  const defaultReps = parseDefaultReps(planDefaults?.defaultReps ?? "8-12");
+  const defaultRestSeconds = planDefaults?.defaultRestSeconds ?? 90;
+
+  const suggestion = session.isDeload
+    ? null
+    : await getPendingSuggestion(exerciseId);
+
+  let defaultWeight = num(planDefaults?.defaultWeight);
+  if (suggestion) {
+    defaultWeight = num(suggestion.suggestedWeightKg);
+  } else if (!defaultWeight) {
+    const last = await getLastSessionWeights(exerciseId);
+    if (last) defaultWeight = last.maxWeight;
+  }
+
+  const [se] = await db
+    .insert(sessionExercises)
+    .values({
+      sessionId,
+      exerciseId,
+      sortOrder: maxSort + 1,
+      notes: USER_ADDED_MARKER,
+    })
+    .returning();
+
+  for (let i = 1; i <= defaultSets; i++) {
+    await db.insert(sessionSets).values({
+      sessionExerciseId: se.id,
+      setNumber: i,
+      reps: defaultReps,
+      weightKg: defaultWeight != null ? String(defaultWeight) : null,
+      isWarmup: false,
+      isCompleted: false,
+    });
+  }
+
+  const detail = await getSessionDetail(sessionId);
+  const added = detail?.exercises.find((e) => e.id === se.id);
+
+  return {
+    sessionExercise: added,
+    defaultRestSeconds,
+  };
 }
 
 export async function addWarmupSet(sessionExerciseId: number) {

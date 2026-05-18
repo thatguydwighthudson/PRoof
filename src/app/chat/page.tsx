@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
@@ -33,37 +34,53 @@ export default function ChatPage() {
   };
 
   return (
-    <div className="flex min-h-[calc(100vh-5rem)] flex-col px-4 pt-6">
-      <h1 className="mb-4 text-2xl font-bold">AI Coach</h1>
+    <div className="flex min-h-[calc(100vh-5rem)] flex-col bg-mesh px-4 pt-6">
+      <h1 className="mb-1 text-3xl font-extrabold tracking-tight">
+        AI Coach 🤖
+      </h1>
+      <p className="mb-4 text-sm text-zinc-500">Training · nutrition · recovery</p>
       <div className="flex-1 space-y-3 overflow-y-auto pb-4">
         {messages.length === 0 && (
-          <Card>
-            <p className="text-sm text-zinc-400">
-              Ask about training, nutrition, recovery, or programming.
+          <Card className="border-emerald-500/20 bg-gradient-to-br from-emerald-500/10 to-zinc-900">
+            <span className="text-3xl">🤖</span>
+            <p className="mt-2 text-sm leading-relaxed text-zinc-300">
+              Ask about training, nutrition, recovery, or programming. I&apos;m
+              in your corner.
             </p>
           </Card>
         )}
         {messages.map((m, i) => (
-          <div
+          <motion.div
             key={i}
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
             className={
               m.role === "user"
-                ? "ml-6 rounded-xl bg-emerald-600/20 p-3 text-sm"
-                : "mr-6 rounded-xl bg-zinc-800 p-3 text-sm"
+                ? "ml-8 rounded-2xl border border-emerald-500/30 bg-emerald-600/20 p-4 text-sm"
+                : "mr-8 rounded-2xl border border-zinc-700 bg-zinc-900 p-4 text-sm"
             }
           >
+            <span className="mb-1 block text-[10px] font-bold uppercase tracking-wider text-zinc-500">
+              {m.role === "user" ? "You" : "Coach 🤖"}
+            </span>
             {m.content}
-          </div>
+          </motion.div>
         ))}
+        {loading && (
+          <p className="text-center text-sm text-zinc-500 animate-pulse">
+            Coach is thinking…
+          </p>
+        )}
       </div>
       <div className="flex gap-2 py-4">
         <Input
           value={input}
           onChange={(e) => setInput(e.target.value)}
-          placeholder="Your question…"
+          placeholder="Ask your coach…"
+          className="border-zinc-700 bg-zinc-900"
           onKeyDown={(e) => e.key === "Enter" && send()}
         />
-        <Button onClick={send} disabled={loading}>
+        <Button onClick={send} disabled={loading} className="shrink-0">
           Send
         </Button>
       </div>

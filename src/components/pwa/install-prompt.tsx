@@ -19,9 +19,6 @@ export function InstallPrompt() {
       setDeferred(e as BeforeInstallPromptEvent);
     };
     window.addEventListener("beforeinstallprompt", handler);
-    if ("serviceWorker" in navigator) {
-      navigator.serviceWorker.register("/sw.js").catch(() => {});
-    }
     if (Notification.permission === "default") {
       Notification.requestPermission().catch(() => {});
     }

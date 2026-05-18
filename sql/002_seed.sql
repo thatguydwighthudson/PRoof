@@ -141,12 +141,12 @@ VALUES
  'dumbbell shoulder press form'),
 
 ('Lateral Raise',            (SELECT id FROM muscle_groups WHERE name='Shoulders'),
- ARRAY[], 'dumbbell', 'beginner',
+ ARRAY[]::TEXT[], 'dumbbell', 'beginner',
  'Stand holding dumbbells at sides. Raise arms to shoulder height with a slight bend in elbow. Slow on the way down.',
  'lateral raise form'),
 
 ('Front Raise',              (SELECT id FROM muscle_groups WHERE name='Shoulders'),
- ARRAY[], 'dumbbell', 'beginner',
+ ARRAY[]::TEXT[], 'dumbbell', 'beginner',
  'Hold dumbbells in front of thighs. Raise one or both arms to shoulder height. Control descent.',
  'front raise shoulder form'),
 
@@ -179,7 +179,7 @@ VALUES
  'hammer curl form'),
 
 ('Incline Dumbbell Curl',    (SELECT id FROM muscle_groups WHERE name='Biceps'),
- ARRAY[], 'dumbbell', 'intermediate',
+ ARRAY[]::TEXT[], 'dumbbell', 'intermediate',
  'Lie back on inclined bench. Arms hang straight down. Curl up. Great stretch at the bottom.',
  'incline dumbbell curl form'),
 
@@ -189,7 +189,7 @@ VALUES
  'cable curl form'),
 
 ('Preacher Curl',            (SELECT id FROM muscle_groups WHERE name='Biceps'),
- ARRAY[], 'barbell', 'intermediate',
+ ARRAY[]::TEXT[], 'barbell', 'intermediate',
  'Rest upper arms on preacher pad. Curl weight up, lower to full extension slowly.',
  'preacher curl form');
 
@@ -202,17 +202,17 @@ VALUES
  'tricep dips form'),
 
 ('Skull Crusher',            (SELECT id FROM muscle_groups WHERE name='Triceps'),
- ARRAY[], 'barbell', 'intermediate',
+ ARRAY[]::TEXT[], 'barbell', 'intermediate',
  'Lie on bench. Hold bar above chest. Lower bar toward forehead by bending elbows only. Press back up.',
  'skull crusher form'),
 
 ('Tricep Pushdown',          (SELECT id FROM muscle_groups WHERE name='Triceps'),
- ARRAY[], 'cable', 'beginner',
+ ARRAY[]::TEXT[], 'cable', 'beginner',
  'Stand at cable with bar or rope overhead. Push down until arms extended. Keep elbows at sides.',
  'tricep pushdown form'),
 
 ('Overhead Tricep Extension',(SELECT id FROM muscle_groups WHERE name='Triceps'),
- ARRAY[], 'dumbbell', 'beginner',
+ ARRAY[]::TEXT[], 'dumbbell', 'beginner',
  'Hold one dumbbell with both hands overhead. Lower behind head, elbows pointing up. Press back up.',
  'overhead tricep extension form'),
 
@@ -245,7 +245,7 @@ VALUES
  'leg press form'),
 
 ('Leg Extension',            (SELECT id FROM muscle_groups WHERE name='Quads'),
- ARRAY[], 'machine', 'beginner',
+ ARRAY[]::TEXT[], 'machine', 'beginner',
  'Sit in machine. Extend legs fully, squeeze quads at top. Slow controlled descent.',
  'leg extension form'),
 
@@ -268,12 +268,12 @@ VALUES
  'romanian deadlift form'),
 
 ('Leg Curl (Machine)',       (SELECT id FROM muscle_groups WHERE name='Hamstrings'),
- ARRAY[], 'machine', 'beginner',
+ ARRAY[]::TEXT[], 'machine', 'beginner',
  'Lie face down. Curl legs toward glutes. Squeeze at top. Control the return.',
  'lying leg curl form'),
 
 ('Nordic Curl',              (SELECT id FROM muscle_groups WHERE name='Hamstrings'),
- ARRAY[], 'bodyweight', 'advanced',
+ ARRAY[]::TEXT[], 'bodyweight', 'advanced',
  'Kneel with feet anchored. Lower torso toward floor slowly using hamstrings. Push up with hands.',
  'nordic curl form'),
 
@@ -296,7 +296,7 @@ VALUES
  'glute bridge form'),
 
 ('Cable Kickback',           (SELECT id FROM muscle_groups WHERE name='Glutes'),
- ARRAY[], 'cable', 'beginner',
+ ARRAY[]::TEXT[], 'cable', 'beginner',
  'Attach ankle strap to cable. Kick leg back and up. Keep core stable and avoid rotating hips.',
  'cable kickback glute form'),
 
@@ -309,17 +309,17 @@ VALUES
 INSERT INTO exercises (name, muscle_group_id, secondary_muscles, equipment, difficulty, instructions, youtube_query)
 VALUES
 ('Standing Calf Raise',      (SELECT id FROM muscle_groups WHERE name='Calves'),
- ARRAY[], 'machine', 'beginner',
+ ARRAY[]::TEXT[], 'machine', 'beginner',
  'Full range of motion — stretch at bottom, rise onto toes at top. Slow and controlled.',
  'standing calf raise form'),
 
 ('Seated Calf Raise',        (SELECT id FROM muscle_groups WHERE name='Calves'),
- ARRAY[], 'machine', 'beginner',
+ ARRAY[]::TEXT[], 'machine', 'beginner',
  'Targets soleus. Press up onto toes from seated position. Slow controlled reps.',
  'seated calf raise form'),
 
 ('Single-Leg Calf Raise',    (SELECT id FROM muscle_groups WHERE name='Calves'),
- ARRAY[], 'bodyweight', 'intermediate',
+ ARRAY[]::TEXT[], 'bodyweight', 'intermediate',
  'Balance on one foot. Rise onto toes slowly. Add a dumbbell for extra resistance.',
  'single leg calf raise form');
 
@@ -332,7 +332,7 @@ VALUES
  'plank proper form'),
 
 ('Cable Crunch',             (SELECT id FROM muscle_groups WHERE name='Abs'),
- ARRAY[], 'cable', 'beginner',
+ ARRAY[]::TEXT[], 'cable', 'beginner',
  'Kneel facing cable. Hold rope at head. Crunch down toward knees. Feel abs contract.',
  'cable crunch form'),
 
@@ -360,12 +360,12 @@ VALUES
 INSERT INTO exercises (name, muscle_group_id, secondary_muscles, equipment, difficulty, instructions, youtube_query)
 VALUES
 ('Barbell Shrug',            (SELECT id FROM muscle_groups WHERE name='Traps'),
- ARRAY[], 'barbell', 'beginner',
+ ARRAY[]::TEXT[], 'barbell', 'beginner',
  'Hold bar at thighs. Shrug shoulders straight up. Hold briefly at top. Do not roll shoulders.',
  'barbell shrug form'),
 
 ('Dumbbell Shrug',           (SELECT id FROM muscle_groups WHERE name='Traps'),
- ARRAY[], 'dumbbell', 'beginner',
+ ARRAY[]::TEXT[], 'dumbbell', 'beginner',
  'Same as barbell shrug but with dumbbells. Allows slightly more range of motion.',
  'dumbbell shrug form');
 
@@ -373,7 +373,7 @@ VALUES
 INSERT INTO exercises (name, muscle_group_id, secondary_muscles, equipment, difficulty, instructions, youtube_query)
 VALUES
 ('Wrist Curl',               (SELECT id FROM muscle_groups WHERE name='Forearms'),
- ARRAY[], 'barbell', 'beginner',
+ ARRAY[]::TEXT[], 'barbell', 'beginner',
  'Forearms resting on bench, palms up. Curl wrists up. Full range of motion.',
  'wrist curl form'),
 

@@ -1,0 +1,32 @@
+-- ============================================================
+-- Add Exercise (active session) — schema notes
+-- ============================================================
+--
+-- REQUIRED: None.
+--
+-- The add-exercise feature uses existing tables only:
+--   session_exercises  (append row, sort_order, notes)
+--   session_sets         (pre-filled working sets)
+--   workout_plan_exercises (read defaults; plan is never modified)
+--   progressive_overload_suggestions (read pending weight)
+--
+-- User-added exercises are flagged in session_exercises.notes
+-- with the sentinel value '__user_added__' (no new column today).
+--
+-- Run this file only if you want an explicit boolean column
+-- instead of the notes sentinel.
+-- ============================================================
+
+-- OPTIONAL: dedicated flag for user-added session exercises
+-- ALTER TABLE session_exercises
+--   ADD COLUMN IF NOT EXISTS is_user_added BOOLEAN NOT NULL DEFAULT FALSE;
+
+-- Backfill from existing sentinel (safe to re-run)
+-- UPDATE session_exercises
+-- SET is_user_added = TRUE
+-- WHERE notes = '__user_added__';
+
+-- Clear sentinel from notes after backfill (optional)
+-- UPDATE session_exercises
+-- SET notes = NULL
+-- WHERE notes = '__user_added__';

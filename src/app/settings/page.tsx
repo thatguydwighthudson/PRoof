@@ -6,6 +6,7 @@ import { ChevronLeft } from "lucide-react";
 import { useUser } from "@/components/providers/user-provider";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { SectionLabel } from "@/components/ui/section-label";
 import { cn } from "@/lib/utils";
 
 export default function SettingsPage() {
@@ -65,27 +66,27 @@ export default function SettingsPage() {
   };
 
   return (
-    <div className="px-4 pt-6">
+    <div className="bg-mesh min-h-screen px-4 pt-6">
       <Link
         href="/today"
-        className="mb-4 inline-flex items-center text-sm text-zinc-500"
+        className="mb-4 inline-flex items-center text-sm font-medium text-zinc-500"
       >
         <ChevronLeft className="h-4 w-4" /> Back
       </Link>
-      <h1 className="mb-6 text-2xl font-bold">Settings</h1>
+      <h1 className="mb-6 text-3xl font-extrabold tracking-tight">Settings ⚙️</h1>
 
       <Card className="mb-4">
-        <p className="mb-3 text-sm font-medium text-zinc-400">Units</p>
-        <div className="flex gap-2">
+        <SectionLabel>Units</SectionLabel>
+        <div className="mt-3 flex gap-2">
           {(["lbs", "kg"] as const).map((u) => (
             <button
               key={u}
               type="button"
               onClick={() => setUnit(u)}
               className={cn(
-                "flex-1 rounded-xl py-3 text-sm font-semibold",
+                "flex-1 rounded-xl py-3 text-sm font-bold uppercase tracking-wide",
                 preferredUnit === u
-                  ? "bg-emerald-600 text-white"
+                  ? "bg-emerald-600 text-white shadow-lg shadow-emerald-600/25"
                   : "bg-zinc-800 text-zinc-400"
               )}
             >
@@ -96,20 +97,21 @@ export default function SettingsPage() {
       </Card>
 
       <Card className="mb-4">
-        <p className="mb-3 text-sm font-medium text-zinc-400">Reminders</p>
-        <label className="mb-3 flex items-center justify-between">
-          <span className="text-sm">Daily reminder</span>
+        <SectionLabel>Reminders</SectionLabel>
+        <label className="mb-3 mt-3 flex items-center justify-between">
+          <span className="text-sm font-medium">🔔 Daily reminder</span>
           <input
             type="checkbox"
             checked={remindersOn}
             onChange={(e) => setRemindersOn(e.target.checked)}
+            className="h-5 w-5 accent-emerald-500"
           />
         </label>
         <input
           type="time"
           value={reminderTime}
           onChange={(e) => setReminderTime(e.target.value)}
-          className="w-full rounded-xl border border-zinc-700 bg-zinc-900 px-3 py-2"
+          className="w-full rounded-xl border border-zinc-700 bg-zinc-950 px-3 py-3 font-medium"
         />
         <Button className="mt-3 w-full" variant="secondary" onClick={saveReminders}>
           Save reminders
@@ -120,20 +122,26 @@ export default function SettingsPage() {
       </Card>
 
       <Card>
-        <p className="mb-3 text-sm font-medium text-zinc-400">Export</p>
-        <div className="flex gap-2">
-          <Button variant="secondary" className="flex-1" onClick={exportJson}>
-            JSON
-          </Button>
-          <Button variant="secondary" className="flex-1" onClick={exportCsv}>
-            CSV
-          </Button>
-        </div>
+        <SectionLabel>Export</SectionLabel>
+        <p className="mt-2 mb-3 text-xs text-zinc-500">Download your training data</p>
+        <Button
+          variant="secondary"
+          className="mb-2 w-full font-bold"
+          onClick={exportJson}
+        >
+          📤 Export My Data (JSON)
+        </Button>
+        <Button variant="outline" className="w-full" onClick={exportCsv}>
+          📊 Session history (CSV)
+        </Button>
       </Card>
 
       <Link href="/body" className="mt-4 block">
-        <Button variant="outline" className="w-full">
-          Weekly body check-in
+        <Button
+          variant="outline"
+          className="h-14 w-full border-zinc-700 text-base font-bold"
+        >
+          ⚖️ Weekly Check-In
         </Button>
       </Link>
     </div>

@@ -2,28 +2,29 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   Calculator,
+  ChevronDown,
   ChevronLeft,
   ChevronRight,
+  ChevronUp,
   MessageCircle,
   Plus,
-  SkipForward,
 } from "lucide-react";
-import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
+import { SectionLabel } from "@/components/ui/section-label";
 import { useUser } from "@/components/providers/user-provider";
-import {
-  displayWeight,
-  displayWeightValue,
-  formatWeightShort,
-  inputToKg,
-} from "@/lib/units";
+import { displayWeightValue, formatWeightShort } from "@/lib/units";
+import { FEEL_EMOJIS, feelLabel } from "@/lib/ui/feel";
 import { PlateCalculator } from "@/components/workout/plate-calculator";
 import { WorkoutCoach } from "@/components/workout/workout-coach";
-import { cn, youtubeSearchUrl } from "@/lib/utils";
+import { RestTimerOverlay } from "@/components/workout/rest-timer-overlay";
+import { PrBanner } from "@/components/workout/pr-banner";
+import { AddExerciseSheet } from "@/components/workout/add-exercise-sheet";
+import { cn } from "@/lib/utils";
 
 type SetRow = {
   id: number;
@@ -40,6 +41,7 @@ type ExerciseBlock = {
   exerciseId: number;
   sortOrder: number;
   notes: string | null;
+  isUserAdded?: boolean;
   exercise: {
     id: number;
     name: string;
@@ -65,18 +67,26 @@ type SessionData = {
   exercises: ExerciseBlock[];
 };
 
+const REST_DEFAULT = 90;
+
 export function WorkoutSession({ sessionId }: { sessionId: number }) {
   const router = useRouter();
   const { preferredUnit } = useUser();
   const [session, setSession] = useState<SessionData | null>(null);
   const [exerciseIndex, setExerciseIndex] = useState(0);
   const [restSeconds, setRestSeconds] = useState<number | null>(null);
+  const [restTotal, setRestTotal] = useState(REST_DEFAULT);
   const [showComplete, setShowComplete] = useState(false);
   const [feel, setFeel] = useState(3);
   const [notes, setNotes] = useState("");
   const [plateOpen, setPlateOpen] = useState(false);
   const [coachOpen, setCoachOpen] = useState(false);
-  const [prFlash, setPrFlash] = useState<string | null>(null);
+  const [prDetail, setPrDetail] = useState<string | null>(null);
+  const [cardioOpen, setCardioOpen] = useState(false);
+  const [addExerciseOpen, setAddExerciseOpen] = useState(false);
+  const [restByExerciseId, setRestByExerciseId] = useState<Record<number, number>>(
+    {}
+  );
 
   const load = useCallback(async () => {
     const res = await fetch(`/api/sessions/${sessionId}`);
@@ -93,7 +103,7 @@ export function WorkoutSession({ sessionId }: { sessionId: number }) {
       setRestSeconds((s) => {
         if (s == null || s <= 1) {
           if (typeof navigator !== "undefined" && "vibrate" in navigator) {
-            navigator.vibrate(200);
+            navigator.vibrate([100, 50, 100]);
           }
           return null;
         }
@@ -104,6 +114,16 @@ export function WorkoutSession({ sessionId }: { sessionId: number }) {
   }, [restSeconds]);
 
   const current = session?.exercises[exerciseIndex];
+  const progress =
+    session && session.exercises.length > 0
+      ? ((exerciseIndex + 1) / session.exercises.length) * 100
+      : 0;
+
+  const firstIncompleteId = useMemo(() => {
+    if (!current) return null;
+    const all = [...current.sets].sort((a, b) => a.setNumber - b.setNumber);
+    return all.find((s) => !s.isCompleted)?.id ?? null;
+  }, [current]);
 
   const updateSet = async (
     setId: number,
@@ -120,12 +140,14 @@ export function WorkoutSession({ sessionId }: { sessionId: number }) {
       if (data.prHit.isWeightPr) parts.push("weight");
       if (data.prHit.isRepsPr) parts.push("reps");
       if (data.prHit.isVolumePr) parts.push("volume");
-      setPrFlash(parts.join(" & "));
-      toast.success("🏆 New PR!", { description: parts.join(", ") });
-      setTimeout(() => setPrFlash(null), 3000);
+      setPrDetail(parts.join(" & "));
     }
     await load();
-    if (patch.isCompleted) setRestSeconds(90);
+    if (patch.isCompleted && current) {
+      const rest = restByExerciseId[current.id] ?? REST_DEFAULT;
+      setRestTotal(rest);
+      setRestSeconds(rest);
+    }
   };
 
   const addWarmup = async () => {
@@ -145,7 +167,6 @@ export function WorkoutSession({ sessionId }: { sessionId: number }) {
       body: JSON.stringify({ sessionNotes: notes, overallFeel: feel }),
     });
     router.push("/today");
-    toast.success("Workout complete!");
   };
 
   const workingSets = useMemo(
@@ -159,47 +180,119 @@ export function WorkoutSession({ sessionId }: { sessionId: number }) {
 
   if (!session || !current) {
     return (
-      <div className="flex min-h-[50vh] items-center justify-center text-zinc-500">
-        Loading workout…
+      <div className="flex min-h-[50vh] flex-col items-center justify-center gap-3 text-zinc-500">
+        <span className="animate-pulse text-4xl">🏋️</span>
+        <p className="font-medium">Loading workout…</p>
       </div>
     );
   }
 
   return (
-    <div className="flex min-h-screen flex-col px-4 pb-8 pt-4">
+    <div className="flex min-h-screen flex-col bg-mesh px-4 pb-8 pt-4">
+      <PrBanner
+        show={!!prDetail}
+        detail={prDetail}
+        onDismiss={() => setPrDetail(null)}
+      />
+
       {session.isDeload && (
-        <div className="mb-3 rounded-xl border border-amber-500/40 bg-amber-500/10 py-2 text-center text-sm text-amber-200">
-          Deload Week
+        <div className="mb-3 rounded-2xl border border-amber-500/30 bg-amber-500/10 py-2.5 text-center text-sm font-bold text-amber-100">
+          😴 Deload Week — Recovery is progress
         </div>
       )}
 
-      <div className="mb-4 flex items-center justify-between">
-        <Button variant="ghost" size="sm" onClick={() => router.push("/today")}>
-          <ChevronLeft className="h-4 w-4" /> Exit
-        </Button>
-        <span className="text-sm text-zinc-500">
-          {exerciseIndex + 1} / {session.exercises.length}
-        </span>
-        <Button variant="ghost" size="icon" onClick={() => setCoachOpen(true)}>
-          <MessageCircle className="h-5 w-5" />
+      <div className="mb-2">
+        <div className="mb-3 flex items-center justify-between">
+          <Button variant="ghost" size="sm" onClick={() => router.push("/today")}>
+            <ChevronLeft className="h-4 w-4" /> Exit
+          </Button>
+          <SectionLabel>
+            Exercise {exerciseIndex + 1} of {session.exercises.length}
+          </SectionLabel>
+          <Button variant="ghost" size="icon" onClick={() => setCoachOpen(true)}>
+            <MessageCircle className="h-5 w-5" />
+          </Button>
+        </div>
+        <div className="h-1.5 overflow-hidden rounded-full bg-zinc-800">
+          <motion.div
+            className="h-full rounded-full bg-gradient-to-r from-emerald-500 to-emerald-400"
+            initial={false}
+            animate={{ width: `${progress}%` }}
+            transition={{ duration: 0.3 }}
+          />
+        </div>
+      </div>
+
+      <div className="mt-3 space-y-2">
+        <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500">
+          Session exercises
+        </p>
+        <motion.div layout className="flex gap-2 overflow-x-auto pb-1">
+          {session.exercises.map((ex, i) => (
+            <button
+              key={ex.id}
+              type="button"
+              onClick={() => {
+                setPrDetail(null);
+                setExerciseIndex(i);
+              }}
+              className={cn(
+                "shrink-0 rounded-xl border px-3 py-2 text-left text-xs font-semibold transition-colors",
+                i === exerciseIndex
+                  ? "border-emerald-500/60 bg-emerald-950/50 text-emerald-200"
+                  : "border-zinc-800 bg-zinc-900/60 text-zinc-400 hover:border-zinc-600"
+              )}
+            >
+              <span className="block max-w-[120px] truncate">{ex.exercise.name}</span>
+              {ex.isUserAdded && (
+                <span className="mt-0.5 block text-[9px] font-medium text-zinc-500">
+                  + you
+                </span>
+              )}
+            </button>
+          ))}
+        </motion.div>
+        <Button
+          variant="outline"
+          className="h-12 w-full border-dashed border-emerald-600/50 bg-emerald-950/20 text-base font-bold text-emerald-300 hover:bg-emerald-950/40"
+          onClick={() => setAddExerciseOpen(true)}
+        >
+          <Plus className="h-5 w-5" /> Add Exercise
         </Button>
       </div>
 
-      <h1 className="text-xl font-bold">{current.exercise.name}</h1>
-      {current.suggestion && (
-        <p className="mt-1 text-xs text-emerald-400">
-          ↑ Suggested: {formatWeightShort(current.suggestion.suggestedWeightKg, preferredUnit)}{" "}
-          (was {formatWeightShort(current.suggestion.lastWeightKg, preferredUnit)})
+      <p className="mt-4 text-center text-xs font-medium text-emerald-400/90">
+        Let&apos;s get to work 🔥
+      </p>
+      <h1 className="mt-1 text-center text-3xl font-extrabold leading-tight tracking-tight text-zinc-50">
+        {current.exercise.name}
+      </h1>
+      {current.isUserAdded && (
+        <p className="mt-1 text-center">
+          <span className="rounded-full bg-zinc-800 px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-zinc-400">
+            Added by you
+          </span>
         </p>
       )}
-      {prFlash && (
-        <p className="mt-1 animate-pulse text-sm font-semibold text-amber-400">
-          🏆 PR — {prFlash}
+
+      {current.suggestion && (
+        <p className="mt-2 text-center text-xs font-semibold text-emerald-400">
+          ⬆️ Suggested:{" "}
+          {formatWeightShort(current.suggestion.suggestedWeightKg, preferredUnit)}{" "}
+          <span className="text-zinc-500">
+            (was {formatWeightShort(current.suggestion.lastWeightKg, preferredUnit)})
+          </span>
+        </p>
+      )}
+
+      {prDetail && (
+        <p className="animate-pr-pulse mt-2 text-center text-sm font-bold text-amber-400">
+          🏆 PR — {prDetail}
         </p>
       )}
 
       {current.lastPerformance && (
-        <p className="mt-2 text-xs text-zinc-500">
+        <p className="mt-2 text-center text-xs text-zinc-500">
           Last:{" "}
           {current.lastPerformance.sets
             .map(
@@ -213,7 +306,7 @@ export function WorkoutSession({ sessionId }: { sessionId: number }) {
       <Button
         variant="outline"
         size="sm"
-        className="mt-3 w-fit"
+        className="mx-auto mt-4 w-fit border-zinc-700"
         onClick={addWarmup}
       >
         <Plus className="h-4 w-4" /> Add Warm-up Set
@@ -224,6 +317,7 @@ export function WorkoutSession({ sessionId }: { sessionId: number }) {
           <SetCard
             key={set.id}
             set={set}
+            isActive={set.id === firstIncompleteId}
             isBodyweight={current.exercise.isBodyweight}
             preferredUnit={preferredUnit}
             onUpdate={updateSet}
@@ -231,6 +325,33 @@ export function WorkoutSession({ sessionId }: { sessionId: number }) {
           />
         ))}
       </div>
+
+      <button
+        type="button"
+        onClick={() => setCardioOpen((o) => !o)}
+        className="mt-4 flex w-full items-center justify-between rounded-2xl border border-zinc-800 bg-zinc-900/60 px-4 py-3 text-left text-sm font-semibold text-zinc-300"
+      >
+        <span>🏃 Add Cardio</span>
+        {cardioOpen ? (
+          <ChevronUp className="h-4 w-4" />
+        ) : (
+          <ChevronDown className="h-4 w-4" />
+        )}
+      </button>
+      <AnimatePresence>
+        {cardioOpen && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            className="overflow-hidden"
+          >
+            <Card className="mt-2 border-dashed text-center text-sm text-zinc-500">
+              Log duration, distance &amp; intensity after your lifts.
+            </Card>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       <div className="mt-4 flex gap-2">
         <Button
@@ -244,55 +365,57 @@ export function WorkoutSession({ sessionId }: { sessionId: number }) {
         {exerciseIndex < session.exercises.length - 1 ? (
           <Button
             className="flex-1"
-            onClick={() => setExerciseIndex((i) => i + 1)}
+            onClick={() => {
+              setPrDetail(null);
+              setExerciseIndex((i) => i + 1);
+            }}
           >
             Next <ChevronRight />
           </Button>
         ) : (
           <Button className="flex-1" onClick={() => setShowComplete(true)}>
-            Finish
+            Finish 💪
           </Button>
         )}
       </div>
 
-      {restSeconds != null && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/85">
-          <div className="text-center">
-            <p className="text-sm uppercase tracking-widest text-zinc-400">Rest</p>
-            <p className="text-8xl font-bold tabular-nums text-emerald-400">
-              {restSeconds}
-            </p>
-            <Button
-              variant="outline"
-              className="mt-6"
-              onClick={() => setRestSeconds(null)}
-            >
-              <SkipForward className="h-4 w-4" /> Skip
-            </Button>
-          </div>
-        </div>
-      )}
+      <AnimatePresence>
+        {restSeconds != null && (
+          <RestTimerOverlay
+            seconds={restSeconds}
+            total={restTotal}
+            onSkip={() => setRestSeconds(null)}
+          />
+        )}
+      </AnimatePresence>
 
       {showComplete && (
-        <div className="fixed inset-0 z-50 flex items-end bg-black/70">
-          <Card className="w-full rounded-b-none rounded-t-3xl p-6">
-            <h2 className="text-lg font-bold">How did it feel?</h2>
-            <div className="my-4 flex justify-between gap-2">
-              {[1, 2, 3, 4, 5].map((n) => (
-                <button
-                  key={n}
-                  type="button"
-                  onClick={() => setFeel(n)}
-                  className={cn(
-                    "flex h-12 flex-1 items-center justify-center rounded-xl text-lg font-bold",
-                    feel === n
-                      ? "bg-emerald-600 text-white"
-                      : "bg-zinc-800 text-zinc-400"
-                  )}
-                >
-                  {n}
-                </button>
-              ))}
+        <div className="fixed inset-0 z-50 flex items-end bg-black/80 backdrop-blur-sm">
+          <Card className="w-full rounded-b-none rounded-t-3xl border-zinc-700 p-6">
+            <h2 className="text-xl font-extrabold">How did it feel?</h2>
+            <p className="mt-1 text-xs text-zinc-500">Tap your honest vibe</p>
+            <div className="my-5 flex justify-between gap-2">
+              {FEEL_EMOJIS.map((emoji, i) => {
+                const n = i + 1;
+                return (
+                  <button
+                    key={n}
+                    type="button"
+                    onClick={() => setFeel(n)}
+                    className={cn(
+                      "flex h-14 flex-1 flex-col items-center justify-center rounded-2xl transition-all",
+                      feel === n
+                        ? "scale-105 bg-emerald-600 ring-2 ring-emerald-400"
+                        : "bg-zinc-800 hover:bg-zinc-700"
+                    )}
+                  >
+                    <span className="text-2xl">{emoji}</span>
+                    <span className="mt-0.5 text-[9px] font-bold uppercase text-zinc-400">
+                      {feelLabel(n)}
+                    </span>
+                  </button>
+                );
+              })}
             </div>
             <Input
               placeholder="Session notes (optional)"
@@ -300,14 +423,40 @@ export function WorkoutSession({ sessionId }: { sessionId: number }) {
               onChange={(e) => setNotes(e.target.value)}
               className="mb-4"
             />
-            <Button className="w-full" onClick={finishSession}>
-              Complete Workout
+            <Button className="h-14 w-full text-lg font-bold" onClick={finishSession}>
+              Complete Workout 🔥
             </Button>
           </Card>
         </div>
       )}
 
       <PlateCalculator open={plateOpen} onClose={() => setPlateOpen(false)} />
+      <AddExerciseSheet
+        open={addExerciseOpen}
+        onClose={() => setAddExerciseOpen(false)}
+        sessionId={sessionId}
+        planId={session.planId}
+        sessionExerciseIds={
+          new Set(session.exercises.map((e) => e.exerciseId))
+        }
+        onAdded={async (exerciseId, defaultRestSeconds) => {
+          const res = await fetch(`/api/sessions/${sessionId}`);
+          if (!res.ok) return;
+          const data: SessionData = await res.json();
+          setSession(data);
+          const idx = data.exercises.findIndex(
+            (e) => e.exerciseId === exerciseId
+          );
+          const block = idx >= 0 ? data.exercises[idx] : null;
+          if (block) {
+            setRestByExerciseId((prev) => ({
+              ...prev,
+              [block.id]: defaultRestSeconds,
+            }));
+            setExerciseIndex(idx);
+          }
+        }}
+      />
       {coachOpen && (
         <WorkoutCoach
           session={session}
@@ -315,97 +464,135 @@ export function WorkoutSession({ sessionId }: { sessionId: number }) {
           onClose={() => setCoachOpen(false)}
         />
       )}
+
+      <button
+        type="button"
+        onClick={() => setCoachOpen(true)}
+        className="fixed bottom-6 right-4 z-30 flex h-14 w-14 items-center justify-center rounded-full bg-emerald-600 text-2xl shadow-lg shadow-emerald-600/40 ring-2 ring-emerald-400/50"
+        aria-label="Ask your coach"
+      >
+        🤖
+      </button>
     </div>
   );
 }
 
 function SetCard({
   set,
+  isActive,
   isBodyweight,
   preferredUnit,
   onUpdate,
   onPlate,
 }: {
   set: SetRow;
+  isActive: boolean;
   isBodyweight: boolean;
   preferredUnit: "lbs" | "kg";
   onUpdate: (id: number, patch: Record<string, unknown>) => void;
   onPlate: () => void;
 }) {
+  const [justCompleted, setJustCompleted] = useState(false);
   const display =
     set.weightKg != null ? displayWeightValue(set.weightKg, preferredUnit) : "";
 
+  const toggleComplete = () => {
+    const next = !set.isCompleted;
+    if (next) {
+      setJustCompleted(true);
+      setTimeout(() => setJustCompleted(false), 600);
+    }
+    onUpdate(set.id, { isCompleted: next });
+  };
+
   return (
-    <Card
+    <motion.div
+      layout
       className={cn(
-        "flex flex-wrap items-center gap-2",
-        set.isWarmup && "border-zinc-700/50 bg-zinc-900/50 opacity-80"
+        "rounded-2xl border-2 p-3 transition-colors",
+        set.isCompleted
+          ? "border-emerald-600/60 bg-emerald-950/40"
+          : "border-zinc-700/80 bg-zinc-900/50",
+        set.isWarmup && "opacity-75",
+        isActive && !set.isCompleted && "animate-glow-pulse border-emerald-500/50"
       )}
     >
-      <span
-        className={cn(
-          "flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-xs font-bold",
-          set.isWarmup ? "bg-zinc-700 text-zinc-300" : "bg-zinc-800"
+      <div className="flex flex-wrap items-center gap-2">
+        <span
+          className={cn(
+            "flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-xs font-black",
+            set.isWarmup ? "bg-zinc-700 text-zinc-300" : "bg-zinc-800 text-zinc-200"
+          )}
+        >
+          {set.isWarmup ? "W" : set.setNumber}
+        </span>
+        <Input
+          type="number"
+          inputMode="decimal"
+          placeholder="Reps"
+          className="h-11 w-16 border-zinc-700 bg-zinc-950"
+          defaultValue={set.reps ?? ""}
+          onBlur={(e) =>
+            onUpdate(set.id, { reps: parseInt(e.target.value, 10) || null })
+          }
+        />
+        {(!isBodyweight || set.weightKg) && (
+          <div className="flex items-center gap-1">
+            <Input
+              type="number"
+              inputMode="decimal"
+              step="0.5"
+              placeholder={preferredUnit}
+              className="h-11 w-20 border-zinc-700 bg-zinc-950 font-bold"
+              defaultValue={display ?? ""}
+              onBlur={(e) =>
+                onUpdate(set.id, {
+                  weightDisplay: parseFloat(e.target.value) || null,
+                })
+              }
+            />
+            <button
+              type="button"
+              onClick={onPlate}
+              className="text-lg hover:scale-110"
+              aria-label="Plate calculator"
+            >
+              🧮
+            </button>
+          </div>
         )}
-      >
-        {set.isWarmup ? "W" : set.setNumber}
-      </span>
-      <Input
-        type="number"
-        inputMode="decimal"
-        placeholder="Reps"
-        className="h-11 w-16"
-        defaultValue={set.reps ?? ""}
-        onBlur={(e) =>
-          onUpdate(set.id, { reps: parseInt(e.target.value, 10) || null })
-        }
-      />
-      {(!isBodyweight || set.weightKg) && (
-        <div className="flex items-center gap-1">
-          <Input
-            type="number"
-            inputMode="decimal"
-            step="0.5"
-            placeholder={preferredUnit}
-            className="h-11 w-20"
-            defaultValue={display ?? ""}
-            onBlur={(e) =>
-              onUpdate(set.id, {
-                weightDisplay: parseFloat(e.target.value) || null,
-              })
-            }
-          />
-          <button
-            type="button"
-            onClick={onPlate}
-            className="text-zinc-500 hover:text-emerald-400"
-            aria-label="Plate calculator"
-          >
-            <Calculator className="h-4 w-4" />
-          </button>
-        </div>
-      )}
-      <Input
-        type="number"
-        inputMode="numeric"
-        placeholder="RPE"
-        className="h-11 w-14"
-        min={1}
-        max={10}
-        defaultValue={set.rpe ?? ""}
-        onBlur={(e) =>
-          onUpdate(set.id, {
-            rpe: parseInt(e.target.value, 10) || null,
-          })
-        }
-      />
-      <Button
-        size="sm"
-        variant={set.isCompleted ? "secondary" : "default"}
-        onClick={() => onUpdate(set.id, { isCompleted: !set.isCompleted })}
-      >
-        {set.isCompleted ? "✓" : "Log"}
-      </Button>
-    </Card>
+        <Input
+          type="number"
+          inputMode="numeric"
+          placeholder="RPE"
+          className="h-11 w-14 border-zinc-700 bg-zinc-950"
+          min={1}
+          max={10}
+          defaultValue={set.rpe ?? ""}
+          onBlur={(e) =>
+            onUpdate(set.id, {
+              rpe: parseInt(e.target.value, 10) || null,
+            })
+          }
+        />
+        <motion.button
+          type="button"
+          whileTap={{ scale: 0.92 }}
+          onClick={toggleComplete}
+          className={cn(
+            "ml-auto flex min-h-11 min-w-[72px] items-center justify-center rounded-xl px-4 text-sm font-bold transition-colors",
+            set.isCompleted
+              ? "bg-emerald-600 text-white"
+              : "bg-zinc-800 text-zinc-200 ring-1 ring-zinc-600"
+          )}
+        >
+          {justCompleted || set.isCompleted ? (
+            <span className={cn(justCompleted && "animate-set-pop")}>✅</span>
+          ) : (
+            "Log"
+          )}
+        </motion.button>
+      </div>
+    </motion.div>
   );
 }
