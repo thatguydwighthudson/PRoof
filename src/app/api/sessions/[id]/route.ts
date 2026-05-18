@@ -1,17 +1,31 @@
 import { NextResponse } from "next/server";
+import { eq } from "drizzle-orm";
 import { getSessionDetail } from "@/lib/services/session";
-import { num } from "@/lib/db/schema";
+import { db } from "@/lib/db";
+import { num, workoutPlans } from "@/lib/db/schema";
 
 export async function GET(
   _req: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
-  const session = await getSessionDetail(parseInt(id, 10));
+  const sessionId = parseInt(id, 10);
+  const session = await getSessionDetail(sessionId);
   if (!session) return NextResponse.json({ error: "Not found" }, { status: 404 });
+
+  let planName: string | null = null;
+  if (session.planId) {
+    const [plan] = await db
+      .select({ name: workoutPlans.name })
+      .from(workoutPlans)
+      .where(eq(workoutPlans.id, session.planId))
+      .limit(1);
+    planName = plan?.name ?? null;
+  }
 
   return NextResponse.json({
     ...session,
+    planName,
     exercises: session.exercises.map((ex) => ({
       ...ex,
       sets: ex.sets.map((s) => ({ ...s, weightKg: num(s.weightKg) })),

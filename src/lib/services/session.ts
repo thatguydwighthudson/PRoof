@@ -1,4 +1,4 @@
-import { and, asc, desc, eq, isNull, ne } from "drizzle-orm";
+import { and, asc, desc, eq, isNull, ne, or } from "drizzle-orm";
 import { db } from "@/lib/db";
 import {
   workoutSessions,
@@ -6,6 +6,8 @@ import {
   sessionSets,
   sessionExerciseSwaps,
   workoutPlanExercises,
+  planExerciseVariations,
+  workoutPlans,
   exercises,
   muscleGroups,
   num,
@@ -544,6 +546,99 @@ export async function addWarmupSet(sessionExerciseId: number) {
     .returning();
 
   return newSet;
+}
+
+async function getActiveSessionExercise(
+  sessionId: number,
+  sessionExerciseId: number
+) {
+  const [session] = await db
+    .select()
+    .from(workoutSessions)
+    .where(eq(workoutSessions.id, sessionId))
+    .limit(1);
+
+  if (!session || session.endedAt) throw new Error("Invalid session");
+
+  const [row] = await db
+    .select({
+      sessionExercise: sessionExercises,
+      exercise: exercises,
+    })
+    .from(sessionExercises)
+    .innerJoin(exercises, eq(sessionExercises.exerciseId, exercises.id))
+    .where(
+      and(
+        eq(sessionExercises.id, sessionExerciseId),
+        eq(sessionExercises.sessionId, sessionId)
+      )
+    )
+    .limit(1);
+
+  if (!row) throw new Error("Exercise not found in session");
+
+  return { session, ...row };
+}
+
+export async function removeSessionExerciseOnly(
+  sessionId: number,
+  sessionExerciseId: number
+) {
+  await getActiveSessionExercise(sessionId, sessionExerciseId);
+
+  await db
+    .delete(sessionExercises)
+    .where(eq(sessionExercises.id, sessionExerciseId));
+}
+
+export async function removeExerciseFromPlanPermanently(
+  sessionId: number,
+  sessionExerciseId: number
+) {
+  const { session, sessionExercise } = await getActiveSessionExercise(
+    sessionId,
+    sessionExerciseId
+  );
+
+  if (!session.planId) {
+    throw new Error("No plan linked to this session");
+  }
+
+  const exerciseId = sessionExercise.exerciseId;
+  const planId = session.planId;
+
+  await db
+    .delete(workoutPlanExercises)
+    .where(
+      and(
+        eq(workoutPlanExercises.planId, planId),
+        eq(workoutPlanExercises.exerciseId, exerciseId)
+      )
+    );
+
+  await db
+    .delete(planExerciseVariations)
+    .where(
+      and(
+        eq(planExerciseVariations.planId, planId),
+        or(
+          eq(planExerciseVariations.baseExerciseId, exerciseId),
+          eq(planExerciseVariations.variantExerciseId, exerciseId)
+        )
+      )
+    );
+
+  await db
+    .delete(sessionExercises)
+    .where(eq(sessionExercises.id, sessionExerciseId));
+
+  const [plan] = await db
+    .select({ name: workoutPlans.name })
+    .from(workoutPlans)
+    .where(eq(workoutPlans.id, planId))
+    .limit(1);
+
+  return { planName: plan?.name ?? "this plan" };
 }
 
 export async function swapExercise(

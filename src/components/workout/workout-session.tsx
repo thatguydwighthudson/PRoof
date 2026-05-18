@@ -11,7 +11,9 @@ import {
   ChevronUp,
   MessageCircle,
   Plus,
+  Trash2,
 } from "lucide-react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
@@ -24,6 +26,10 @@ import { WorkoutCoach } from "@/components/workout/workout-coach";
 import { RestTimerOverlay } from "@/components/workout/rest-timer-overlay";
 import { PrBanner } from "@/components/workout/pr-banner";
 import { AddExerciseSheet } from "@/components/workout/add-exercise-sheet";
+import {
+  RemoveExerciseSheet,
+  type RemoveExerciseTarget,
+} from "@/components/workout/remove-exercise-sheet";
 import { cn } from "@/lib/utils";
 
 type SetRow = {
@@ -64,6 +70,7 @@ type SessionData = {
   id: number;
   isDeload: boolean;
   planId: number | null;
+  planName: string | null;
   exercises: ExerciseBlock[];
 };
 
@@ -84,6 +91,9 @@ export function WorkoutSession({ sessionId }: { sessionId: number }) {
   const [prDetail, setPrDetail] = useState<string | null>(null);
   const [cardioOpen, setCardioOpen] = useState(false);
   const [addExerciseOpen, setAddExerciseOpen] = useState(false);
+  const [removeTarget, setRemoveTarget] = useState<RemoveExerciseTarget | null>(
+    null
+  );
   const [restByExerciseId, setRestByExerciseId] = useState<Record<number, number>>(
     {}
   );
@@ -160,6 +170,58 @@ export function WorkoutSession({ sessionId }: { sessionId: number }) {
     await load();
   };
 
+  const loggedSetCount = (ex: ExerciseBlock) =>
+    ex.sets.filter((s) => s.isCompleted).length;
+
+  const handleExerciseRemoved = (
+    sessionExerciseId: number,
+    scope: "session" | "plan",
+    planName?: string
+  ) => {
+    if (!session) return;
+
+    const removedIndex = session.exercises.findIndex(
+      (e) => e.id === sessionExerciseId
+    );
+    const nextExercises = session.exercises.filter(
+      (e) => e.id !== sessionExerciseId
+    );
+
+    setSession({ ...session, exercises: nextExercises });
+
+    if (removedIndex >= 0) {
+      if (nextExercises.length === 0) {
+        setExerciseIndex(0);
+      } else if (removedIndex < exerciseIndex) {
+        setExerciseIndex((i) => Math.max(0, i - 1));
+      } else if (removedIndex === exerciseIndex) {
+        setExerciseIndex((i) => Math.min(i, nextExercises.length - 1));
+      }
+    }
+
+    setRestByExerciseId((prev) => {
+      const next = { ...prev };
+      delete next[sessionExerciseId];
+      return next;
+    });
+
+    if (scope === "plan") {
+      toast.success(
+        `Removed from ${planName ?? session.planName ?? "this plan"} permanently`
+      );
+    } else {
+      toast.success("Removed from this session");
+    }
+  };
+
+  const startRemoveExercise = (ex: ExerciseBlock) => {
+    setRemoveTarget({
+      sessionExerciseId: ex.id,
+      exerciseName: ex.exercise.name,
+      loggedSetCount: loggedSetCount(ex),
+    });
+  };
+
   const finishSession = async () => {
     await fetch(`/api/sessions/${sessionId}/complete`, {
       method: "POST",
@@ -178,7 +240,63 @@ export function WorkoutSession({ sessionId }: { sessionId: number }) {
     [current]
   );
 
-  if (!session || !current) {
+  if (!session) {
+    return (
+      <div className="flex min-h-[50vh] flex-col items-center justify-center gap-3 text-zinc-500">
+        <span className="animate-pulse text-4xl">🏋️</span>
+        <p className="font-medium">Loading workout…</p>
+      </div>
+    );
+  }
+
+  if (session.exercises.length === 0) {
+    return (
+      <motion.div
+        layout
+        className="flex min-h-screen flex-col bg-mesh px-4 pb-8 pt-4"
+      >
+        <Button variant="ghost" size="sm" onClick={() => router.push("/today")}>
+          <ChevronLeft className="h-4 w-4" /> Exit
+        </Button>
+        <p className="mt-12 text-center text-zinc-400">
+          No exercises in this session.
+        </p>
+        <Button
+          variant="outline"
+          className="mx-auto mt-6 h-12 w-full max-w-sm border-dashed border-emerald-600/50 bg-emerald-950/20 text-base font-bold text-emerald-300"
+          onClick={() => setAddExerciseOpen(true)}
+        >
+          <Plus className="h-5 w-5" /> Add Exercise
+        </Button>
+        <AddExerciseSheet
+          open={addExerciseOpen}
+          onClose={() => setAddExerciseOpen(false)}
+          sessionId={sessionId}
+          planId={session.planId}
+          sessionExerciseIds={new Set()}
+          onAdded={async (exerciseId, defaultRestSeconds) => {
+            const res = await fetch(`/api/sessions/${sessionId}`);
+            if (!res.ok) return;
+            const data: SessionData = await res.json();
+            setSession(data);
+            const idx = data.exercises.findIndex(
+              (e) => e.exerciseId === exerciseId
+            );
+            const block = idx >= 0 ? data.exercises[idx] : null;
+            if (block) {
+              setRestByExerciseId((prev) => ({
+                ...prev,
+                [block.id]: defaultRestSeconds,
+              }));
+              setExerciseIndex(idx);
+            }
+          }}
+        />
+      </motion.div>
+    );
+  }
+
+  if (!current) {
     return (
       <div className="flex min-h-[50vh] flex-col items-center justify-center gap-3 text-zinc-500">
         <span className="animate-pulse text-4xl">🏋️</span>
@@ -228,29 +346,50 @@ export function WorkoutSession({ sessionId }: { sessionId: number }) {
           Session exercises
         </p>
         <motion.div layout className="flex gap-2 overflow-x-auto pb-1">
-          {session.exercises.map((ex, i) => (
-            <button
-              key={ex.id}
-              type="button"
-              onClick={() => {
-                setPrDetail(null);
-                setExerciseIndex(i);
-              }}
-              className={cn(
-                "shrink-0 rounded-xl border px-3 py-2 text-left text-xs font-semibold transition-colors",
-                i === exerciseIndex
-                  ? "border-emerald-500/60 bg-emerald-950/50 text-emerald-200"
-                  : "border-zinc-800 bg-zinc-900/60 text-zinc-400 hover:border-zinc-600"
-              )}
-            >
-              <span className="block max-w-[120px] truncate">{ex.exercise.name}</span>
-              {ex.isUserAdded && (
-                <span className="mt-0.5 block text-[9px] font-medium text-zinc-500">
-                  + you
-                </span>
-              )}
-            </button>
-          ))}
+          <AnimatePresence mode="popLayout">
+            {session.exercises.map((ex, i) => (
+              <motion.div
+                key={ex.id}
+                layout
+                initial={{ opacity: 0, x: -12 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -24, scale: 0.92 }}
+                transition={{ duration: 0.25 }}
+                className="flex shrink-0 items-stretch gap-0.5"
+              >
+                <button
+                  type="button"
+                  onClick={() => {
+                    setPrDetail(null);
+                    setExerciseIndex(i);
+                  }}
+                  className={cn(
+                    "rounded-xl border px-3 py-2 text-left text-xs font-semibold transition-colors",
+                    i === exerciseIndex
+                      ? "border-emerald-500/60 bg-emerald-950/50 text-emerald-200"
+                      : "border-zinc-800 bg-zinc-900/60 text-zinc-400 hover:border-zinc-600"
+                  )}
+                >
+                  <span className="block max-w-[120px] truncate">
+                    {ex.exercise.name}
+                  </span>
+                  {ex.isUserAdded && (
+                    <span className="mt-0.5 block text-[9px] font-medium text-zinc-500">
+                      + you
+                    </span>
+                  )}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => startRemoveExercise(ex)}
+                  className="flex w-8 shrink-0 items-center justify-center rounded-xl border border-zinc-800 bg-zinc-900/60 text-zinc-500 hover:border-red-900/50 hover:bg-red-950/30 hover:text-red-400"
+                  aria-label={`Remove ${ex.exercise.name}`}
+                >
+                  <Trash2 className="h-3.5 w-3.5" />
+                </button>
+              </motion.div>
+            ))}
+          </AnimatePresence>
         </motion.div>
         <Button
           variant="outline"
@@ -455,6 +594,22 @@ export function WorkoutSession({ sessionId }: { sessionId: number }) {
             }));
             setExerciseIndex(idx);
           }
+        }}
+      />
+      <RemoveExerciseSheet
+        open={removeTarget != null}
+        onClose={() => setRemoveTarget(null)}
+        sessionId={sessionId}
+        planId={session.planId}
+        planName={session.planName}
+        target={removeTarget}
+        onRemoved={(scope, planName) => {
+          if (!removeTarget) return;
+          handleExerciseRemoved(
+            removeTarget.sessionExerciseId,
+            scope,
+            planName
+          );
         }}
       />
       {coachOpen && (
