@@ -23,11 +23,15 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
   const [userName, setUserName] = useState("");
 
   const refresh = useCallback(async () => {
-    const res = await fetch("/api/user");
-    if (res.ok) {
-      const data = await res.json();
-      setPreferredUnit(data.preferredUnit);
-      setUserName(data.name);
+    try {
+      const res = await fetch("/api/user");
+      if (res.ok) {
+        const data = await res.json();
+        setPreferredUnit(data.preferredUnit);
+        setUserName(data.name);
+      }
+    } catch {
+      /* offline or transient — keep defaults */
     }
   }, []);
 

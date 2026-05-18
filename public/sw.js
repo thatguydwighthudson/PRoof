@@ -1,18 +1,4 @@
-/* PRoof service worker — push notifications only (no fetch caching). */
-
-self.addEventListener("install", (event) => {
-  event.waitUntil(self.skipWaiting());
-});
-
-self.addEventListener("activate", (event) => {
-  event.waitUntil(self.clients.claim());
-});
-
-self.addEventListener("message", (event) => {
-  if (event.data?.type === "SKIP_WAITING") {
-    self.skipWaiting();
-  }
-});
+/* Push notifications only — no caching, no skipWaiting, no clients.claim */
 
 self.addEventListener("push", (event) => {
   let data = { title: "PRoof", body: "Workout reminder" };

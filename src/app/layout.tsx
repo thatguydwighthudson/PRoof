@@ -4,6 +4,7 @@ import { Toaster } from "sonner";
 import { BottomNav } from "@/components/layout/bottom-nav";
 import { PageTransition } from "@/components/layout/page-transition";
 import { InstallPrompt } from "@/components/pwa/install-prompt";
+import { SwReset } from "@/components/pwa/sw-reset";
 import { ServiceWorkerRegister } from "@/components/pwa/service-worker-register";
 import { UserProvider } from "@/components/providers/user-provider";
 import "./globals.css";
@@ -44,6 +45,7 @@ export default function RootLayout({
             <PageTransition>{children}</PageTransition>
           </main>
           <BottomNav />
+          <SwReset />
           <ServiceWorkerRegister />
           <InstallPrompt />
           <Toaster theme="dark" position="top-center" />
