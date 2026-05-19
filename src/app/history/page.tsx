@@ -86,7 +86,19 @@ export default function HistoryPage() {
                 return (
                   <Card
                     key={s.id}
-                    className={cn("border-l-4 pl-4", theme.border)}
+                    role="button"
+                    tabIndex={0}
+                    className={cn(
+                      "cursor-pointer border-l-4 pl-4 transition hover:bg-zinc-900/80 active:scale-[0.99]",
+                      theme.border
+                    )}
+                    onClick={() => router.push(`/history/${s.id}`)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" || e.key === " ") {
+                        e.preventDefault();
+                        router.push(`/history/${s.id}`);
+                      }
+                    }}
                   >
                     <div className="flex items-start justify-between gap-2">
                       <div>
@@ -123,7 +135,10 @@ export default function HistoryPage() {
                       size="sm"
                       variant="outline"
                       className="mt-4 w-full border-zinc-700"
-                      onClick={() => repeat(s.id)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        repeat(s.id);
+                      }}
                     >
                       🔁 Repeat This Workout
                     </Button>
