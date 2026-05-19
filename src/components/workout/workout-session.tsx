@@ -4,11 +4,15 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  Calculator,
+  ArrowDown,
+  ArrowUp,
   ChevronDown,
   ChevronLeft,
   ChevronRight,
   ChevronUp,
+  ExternalLink,
+  Info,
+  Link2,
   MessageCircle,
   Plus,
   Trash2,
@@ -24,12 +28,23 @@ import { FEEL_EMOJIS, feelLabel } from "@/lib/ui/feel";
 import { PlateCalculator } from "@/components/workout/plate-calculator";
 import { WorkoutCoach } from "@/components/workout/workout-coach";
 import { RestTimerOverlay } from "@/components/workout/rest-timer-overlay";
+import { RestTimerMinimized } from "@/components/workout/rest-timer-minimized";
+import { WearableNotice } from "@/components/workout/wearable-notice";
+import {
+  getExerciseProgress,
+  progressLabel,
+} from "@/lib/workout/exercise-progress";
+import { youtubeSearchUrl } from "@/lib/utils";
 import { PrBanner } from "@/components/workout/pr-banner";
 import { AddExerciseSheet } from "@/components/workout/add-exercise-sheet";
 import {
   RemoveExerciseSheet,
   type RemoveExerciseTarget,
 } from "@/components/workout/remove-exercise-sheet";
+import {
+  SupersetSheet,
+  type SupersetSheetTarget,
+} from "@/components/workout/superset-sheet";
 import { cn } from "@/lib/utils";
 
 type SetRow = {
@@ -46,15 +61,18 @@ type ExerciseBlock = {
   id: number;
   exerciseId: number;
   sortOrder: number;
+  supersetGroupId: number | null;
   notes: string | null;
   isUserAdded?: boolean;
   exercise: {
     id: number;
     name: string;
     isBodyweight: boolean;
+    equipment: string | null;
     instructions: string | null;
     youtubeQuery: string | null;
   };
+  muscleGroup: { name: string } | null;
   sets: SetRow[];
   suggestion: {
     lastWeightKg: number;
@@ -63,6 +81,7 @@ type ExerciseBlock = {
   lastPerformance: {
     sessionDate: string;
     sets: SetRow[];
+    typical: { reps: number | null; weightKg: number | null } | null;
   } | null;
 };
 
@@ -97,6 +116,12 @@ export function WorkoutSession({ sessionId }: { sessionId: number }) {
   const [restByExerciseId, setRestByExerciseId] = useState<Record<number, number>>(
     {}
   );
+  const [restMinimized, setRestMinimized] = useState(false);
+  const [showExerciseInfo, setShowExerciseInfo] = useState(false);
+  const [showWearableNotice, setShowWearableNotice] = useState(false);
+  const [supersetTarget, setSupersetTarget] = useState<SupersetSheetTarget | null>(
+    null
+  );
 
   const load = useCallback(async () => {
     const res = await fetch(`/api/sessions/${sessionId}`);
@@ -106,6 +131,14 @@ export function WorkoutSession({ sessionId }: { sessionId: number }) {
   useEffect(() => {
     load();
   }, [load]);
+
+  useEffect(() => {
+    if (!session) return;
+    const key = `proof-wearable-${sessionId}`;
+    if (sessionStorage.getItem(key)) return;
+    setShowWearableNotice(true);
+    sessionStorage.setItem(key, "1");
+  }, [session, sessionId]);
 
   useEffect(() => {
     if (restSeconds == null || restSeconds <= 0) return;
@@ -153,11 +186,71 @@ export function WorkoutSession({ sessionId }: { sessionId: number }) {
       setPrDetail(parts.join(" & "));
     }
     await load();
-    if (patch.isCompleted && current) {
+
+    if (patch.isCompleted && current && session) {
+      const groupId = current.supersetGroupId;
+      if (groupId != null) {
+        const partners = session.exercises.filter(
+          (e) => e.supersetGroupId === groupId && e.id !== current.id
+        );
+        const partnerNeedsWork = partners.some((p) =>
+          p.sets.some((s) => !s.isCompleted)
+        );
+        if (partnerNeedsWork) {
+          const nextPartner = partners.find((p) =>
+            p.sets.some((s) => !s.isCompleted)
+          );
+          if (nextPartner) {
+            const idx = session.exercises.findIndex((e) => e.id === nextPartner.id);
+            if (idx >= 0) setExerciseIndex(idx);
+            return;
+          }
+        }
+      }
+
       const rest = restByExerciseId[current.id] ?? REST_DEFAULT;
       setRestTotal(rest);
       setRestSeconds(rest);
+      setRestMinimized(false);
     }
+  };
+
+  const deleteSet = async (setId: number) => {
+    await fetch(`/api/sessions/${sessionId}/sets/${setId}`, {
+      method: "DELETE",
+    });
+    await load();
+  };
+
+  const moveExercise = async (index: number, direction: -1 | 1) => {
+    if (!session) return;
+    const target = index + direction;
+    if (target < 0 || target >= session.exercises.length) return;
+
+    const reordered = [...session.exercises];
+    [reordered[index], reordered[target]] = [
+      reordered[target],
+      reordered[index],
+    ];
+    await fetch(`/api/sessions/${sessionId}/exercises/reorder`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        orderedSessionExerciseIds: reordered.map((e) => e.id),
+      }),
+    });
+    await load();
+    if (exerciseIndex === index) setExerciseIndex(target);
+    else if (exerciseIndex === target) setExerciseIndex(index);
+  };
+
+  const openSupersetSheet = () => {
+    if (!current) return;
+    setSupersetTarget({
+      sessionExerciseId: current.id,
+      exerciseName: current.exercise.name,
+      supersetGroupId: current.supersetGroupId,
+    });
   };
 
   const addWorkingSet = async () => {
@@ -283,6 +376,7 @@ export function WorkoutSession({ sessionId }: { sessionId: number }) {
           onClose={() => setAddExerciseOpen(false)}
           sessionId={sessionId}
           planId={session.planId}
+          planName={session.planName}
           sessionExerciseIds={new Set()}
           onAdded={async (exerciseId, defaultRestSeconds) => {
             const res = await fetch(`/api/sessions/${sessionId}`);
@@ -357,7 +451,10 @@ export function WorkoutSession({ sessionId }: { sessionId: number }) {
         </p>
         <motion.div layout className="flex gap-2 overflow-x-auto pb-1">
           <AnimatePresence mode="popLayout">
-            {session.exercises.map((ex, i) => (
+            {session.exercises.map((ex, i) => {
+              const status = getExerciseProgress(ex.sets);
+              const inSuperset = ex.supersetGroupId != null;
+              return (
               <motion.div
                 key={ex.id}
                 layout
@@ -377,12 +474,29 @@ export function WorkoutSession({ sessionId }: { sessionId: number }) {
                     "rounded-xl border px-3 py-2 text-left text-xs font-semibold transition-colors",
                     i === exerciseIndex
                       ? "border-emerald-500/60 bg-emerald-950/50 text-emerald-200"
-                      : "border-zinc-800 bg-zinc-900/60 text-zinc-400 hover:border-zinc-600"
+                      : "border-zinc-800 bg-zinc-900/60 text-zinc-400 hover:border-zinc-600",
+                    status === "done" && i !== exerciseIndex && "border-emerald-800/40",
+                    status === "partial" && i !== exerciseIndex && "border-amber-700/40"
                   )}
                 >
-                  <span className="block max-w-[120px] truncate">
-                    {ex.exercise.name}
+                  <span className="flex max-w-[120px] items-center gap-1 truncate">
+                    {progressLabel(status) && (
+                      <span
+                        className={cn(
+                          "text-[10px]",
+                          status === "done" ? "text-emerald-400" : "text-amber-400"
+                        )}
+                      >
+                        {progressLabel(status)}
+                      </span>
+                    )}
+                    <span className="truncate">{ex.exercise.name}</span>
                   </span>
+                  {inSuperset && (
+                    <span className="mt-0.5 block text-[9px] font-bold uppercase text-violet-400">
+                      SS
+                    </span>
+                  )}
                   {ex.isUserAdded && (
                     <span className="mt-0.5 block text-[9px] font-medium text-zinc-500">
                       + you
@@ -398,7 +512,8 @@ export function WorkoutSession({ sessionId }: { sessionId: number }) {
                   <Trash2 className="h-3.5 w-3.5" />
                 </button>
               </motion.div>
-            ))}
+            );
+            })}
           </AnimatePresence>
         </motion.div>
         <Button
@@ -413,9 +528,97 @@ export function WorkoutSession({ sessionId }: { sessionId: number }) {
       <p className="mt-4 text-center text-xs font-medium text-emerald-400/90">
         Let&apos;s get to work 🔥
       </p>
-      <h1 className="mt-1 text-center text-3xl font-extrabold leading-tight tracking-tight text-zinc-50">
-        {current.exercise.name}
-      </h1>
+      <div className="mt-1 flex items-center justify-center gap-2">
+        <h1 className="text-center text-3xl font-extrabold leading-tight tracking-tight text-zinc-50">
+          {current.exercise.name}
+        </h1>
+        {current.supersetGroupId != null && (
+          <span className="rounded-full bg-violet-500/20 px-2 py-0.5 text-[10px] font-bold uppercase text-violet-300">
+            Superset
+          </span>
+        )}
+      </div>
+
+      <div className="mt-2 flex flex-wrap items-center justify-center gap-2">
+        <Button
+          variant="outline"
+          size="sm"
+          className="h-9 border-zinc-700 text-xs"
+          onClick={() => setShowExerciseInfo((o) => !o)}
+        >
+          <Info className="h-3.5 w-3.5" />
+          {showExerciseInfo ? "Hide info" : "Exercise info"}
+        </Button>
+        {session.exercises.length > 1 && (
+          <Button
+            variant="outline"
+            size="sm"
+            className="h-9 border-violet-700/50 text-xs text-violet-300"
+            onClick={openSupersetSheet}
+          >
+            <Link2 className="h-3.5 w-3.5" />
+            {current.supersetGroupId != null ? "Manage superset" : "Superset"}
+          </Button>
+        )}
+        <Button
+          variant="outline"
+          size="sm"
+          className="h-9 border-zinc-700 text-xs"
+          disabled={exerciseIndex === 0}
+          onClick={() => void moveExercise(exerciseIndex, -1)}
+        >
+          <ArrowUp className="h-3.5 w-3.5" />
+        </Button>
+        <Button
+          variant="outline"
+          size="sm"
+          className="h-9 border-zinc-700 text-xs"
+          disabled={exerciseIndex >= session.exercises.length - 1}
+          onClick={() => void moveExercise(exerciseIndex, 1)}
+        >
+          <ArrowDown className="h-3.5 w-3.5" />
+        </Button>
+      </div>
+
+      <AnimatePresence>
+        {showExerciseInfo && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            className="overflow-hidden"
+          >
+            <Card className="mt-3 space-y-2 border-zinc-700/80 p-4 text-sm text-zinc-300">
+              {current.muscleGroup && (
+                <p>
+                  <span className="font-semibold text-zinc-400">Muscle: </span>
+                  {current.muscleGroup.name}
+                </p>
+              )}
+              {current.exercise.equipment && (
+                <p>
+                  <span className="font-semibold text-zinc-400">Equipment: </span>
+                  {current.exercise.equipment}
+                </p>
+              )}
+              {current.exercise.instructions ? (
+                <p className="leading-relaxed">{current.exercise.instructions}</p>
+              ) : (
+                <p className="text-zinc-500">No written cues for this movement yet.</p>
+              )}
+              <a
+                href={youtubeSearchUrl(current.exercise.youtubeQuery)}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1 font-semibold text-red-400 hover:text-red-300"
+              >
+                Form video <ExternalLink className="h-3.5 w-3.5" />
+              </a>
+            </Card>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {current.isUserAdded && (
         <p className="mt-1 text-center">
           <span className="rounded-full bg-zinc-800 px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-zinc-400">
@@ -452,6 +655,17 @@ export function WorkoutSession({ sessionId }: { sessionId: number }) {
         </p>
       )}
 
+      {current.lastPerformance?.typical &&
+        (current.lastPerformance.typical.reps != null ||
+          current.lastPerformance.typical.weightKg != null) && (
+          <p className="mt-1 text-center text-xs text-emerald-500/90">
+            Usual: {current.lastPerformance.typical.reps ?? "?"} reps
+            {current.lastPerformance.typical.weightKg != null &&
+              !current.exercise.isBodyweight &&
+              ` @ ${formatWeightShort(current.lastPerformance.typical.weightKg, preferredUnit)}`}
+          </p>
+        )}
+
       <motion.div layout className="mx-auto mt-4 flex w-full max-w-sm gap-2">
         <Button
           variant="outline"
@@ -479,7 +693,9 @@ export function WorkoutSession({ sessionId }: { sessionId: number }) {
             isActive={set.id === firstIncompleteId}
             isBodyweight={current.exercise.isBodyweight}
             preferredUnit={preferredUnit}
+            typical={current.lastPerformance?.typical ?? null}
             onUpdate={updateSet}
+            onDelete={() => void deleteSet(set.id)}
             onPlate={() => setPlateOpen(true)}
           />
         ))}
@@ -539,14 +755,27 @@ export function WorkoutSession({ sessionId }: { sessionId: number }) {
       </div>
 
       <AnimatePresence>
-        {restSeconds != null && (
+        {restSeconds != null && !restMinimized && (
           <RestTimerOverlay
             seconds={restSeconds}
             total={restTotal}
             onSkip={() => setRestSeconds(null)}
+            onHide={() => setRestMinimized(true)}
+          />
+        )}
+        {restSeconds != null && restMinimized && (
+          <RestTimerMinimized
+            seconds={restSeconds}
+            total={restTotal}
+            onExpand={() => setRestMinimized(false)}
+            onSkip={() => setRestSeconds(null)}
           />
         )}
       </AnimatePresence>
+
+      {showWearableNotice && (
+        <WearableNotice onDismiss={() => setShowWearableNotice(false)} />
+      )}
 
       {showComplete && (
         <div className="fixed inset-0 z-50 flex items-end bg-black/80 backdrop-blur-sm">
@@ -595,6 +824,7 @@ export function WorkoutSession({ sessionId }: { sessionId: number }) {
         onClose={() => setAddExerciseOpen(false)}
         sessionId={sessionId}
         planId={session.planId}
+        planName={session.planName}
         sessionExerciseIds={
           new Set(session.exercises.map((e) => e.exerciseId))
         }
@@ -632,6 +862,30 @@ export function WorkoutSession({ sessionId }: { sessionId: number }) {
           );
         }}
       />
+      <SupersetSheet
+        open={supersetTarget != null}
+        onClose={() => setSupersetTarget(null)}
+        sessionId={sessionId}
+        target={supersetTarget}
+        partners={session.exercises.map((ex) => ({
+          sessionExerciseId: ex.id,
+          exerciseName: ex.exercise.name,
+          supersetGroupId: ex.supersetGroupId,
+        }))}
+        onChanged={async () => {
+          const anchorId = supersetTarget?.sessionExerciseId;
+          const res = await fetch(`/api/sessions/${sessionId}`);
+          if (res.ok) {
+            const data: SessionData = await res.json();
+            setSession(data);
+            if (anchorId != null) {
+              const idx = data.exercises.findIndex((e) => e.id === anchorId);
+              if (idx >= 0) setExerciseIndex(idx);
+            }
+          }
+          toast.success("Superset updated");
+        }}
+      />
       {coachOpen && (
         <WorkoutCoach
           session={session}
@@ -657,14 +911,18 @@ function SetCard({
   isActive,
   isBodyweight,
   preferredUnit,
+  typical,
   onUpdate,
+  onDelete,
   onPlate,
 }: {
   set: SetRow;
   isActive: boolean;
   isBodyweight: boolean;
   preferredUnit: "lbs" | "kg";
+  typical: { reps: number | null; weightKg: number | null } | null;
   onUpdate: (id: number, patch: Record<string, unknown>) => void;
+  onDelete: () => void;
   onPlate: () => void;
 }) {
   const [justCompleted, setJustCompleted] = useState(false);
@@ -680,6 +938,21 @@ function SetCard({
     onUpdate(set.id, { isCompleted: next });
   };
 
+  const applyTypical = () => {
+    if (!typical) return;
+    const patch: Record<string, unknown> = {};
+    if (typical.reps != null) patch.reps = typical.reps;
+    if (typical.weightKg != null && (!isBodyweight || set.weightKg)) {
+      patch.weightDisplay = displayWeightValue(typical.weightKg, preferredUnit);
+    }
+    if (Object.keys(patch).length > 0) onUpdate(set.id, patch);
+  };
+
+  const canApplyTypical =
+    typical &&
+    !set.isCompleted &&
+    (typical.reps != null || (typical.weightKg != null && !isBodyweight));
+
   return (
     <motion.div
       layout
@@ -693,14 +966,24 @@ function SetCard({
       )}
     >
       <div className="flex flex-wrap items-center gap-2">
-        <span
-          className={cn(
-            "flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-xs font-black",
-            set.isWarmup ? "bg-zinc-700 text-zinc-300" : "bg-zinc-800 text-zinc-200"
-          )}
-        >
-          {set.isWarmup ? "W" : set.setNumber}
-        </span>
+        <div className="flex shrink-0 flex-col items-center gap-1">
+          <span
+            className={cn(
+              "flex h-9 w-9 items-center justify-center rounded-xl text-xs font-black",
+              set.isWarmup ? "bg-zinc-700 text-zinc-300" : "bg-zinc-800 text-zinc-200"
+            )}
+          >
+            {set.isWarmup ? "W" : set.setNumber}
+          </span>
+          <button
+            type="button"
+            onClick={onDelete}
+            className="text-zinc-600 hover:text-red-400"
+            aria-label="Delete set"
+          >
+            <Trash2 className="h-3.5 w-3.5" />
+          </button>
+        </div>
         <Input
           type="number"
           inputMode="decimal"
@@ -750,23 +1033,34 @@ function SetCard({
             })
           }
         />
-        <motion.button
-          type="button"
-          whileTap={{ scale: 0.92 }}
-          onClick={toggleComplete}
-          className={cn(
-            "ml-auto flex min-h-11 min-w-[72px] items-center justify-center rounded-xl px-4 text-sm font-bold transition-colors",
-            set.isCompleted
-              ? "bg-emerald-600 text-white"
-              : "bg-zinc-800 text-zinc-200 ring-1 ring-zinc-600"
+        <div className="ml-auto flex flex-col items-end gap-1">
+          {canApplyTypical && (
+            <button
+              type="button"
+              onClick={applyTypical}
+              className="rounded-lg bg-zinc-800 px-2 py-1 text-[10px] font-bold text-emerald-400 hover:bg-zinc-700"
+            >
+              Use last
+            </button>
           )}
-        >
-          {justCompleted || set.isCompleted ? (
-            <span className={cn(justCompleted && "animate-set-pop")}>✅</span>
-          ) : (
-            "Log"
-          )}
-        </motion.button>
+          <motion.button
+            type="button"
+            whileTap={{ scale: 0.92 }}
+            onClick={toggleComplete}
+            className={cn(
+              "flex min-h-11 min-w-[72px] items-center justify-center rounded-xl px-4 text-sm font-bold transition-colors",
+              set.isCompleted
+                ? "bg-emerald-600 text-white"
+                : "bg-zinc-800 text-zinc-200 ring-1 ring-zinc-600"
+            )}
+          >
+            {justCompleted || set.isCompleted ? (
+              <span className={cn(justCompleted && "animate-set-pop")}>✅</span>
+            ) : (
+              "Log"
+            )}
+          </motion.button>
+        </div>
       </div>
     </motion.div>
   );

@@ -1,5 +1,8 @@
 import { NextResponse } from "next/server";
-import { addSessionExercise } from "@/lib/services/session";
+import {
+  addSessionExercise,
+  addExerciseToPlanPermanently,
+} from "@/lib/services/session";
 import { num } from "@/lib/db/schema";
 
 export async function POST(
@@ -15,14 +18,21 @@ export async function POST(
     return NextResponse.json({ error: "exerciseId required" }, { status: 400 });
   }
 
+  const scope = body.scope === "plan" ? "plan" : "session";
+
   try {
-    const result = await addSessionExercise(sessionId, exerciseId);
+    const result =
+      scope === "plan"
+        ? await addExerciseToPlanPermanently(sessionId, exerciseId)
+        : await addSessionExercise(sessionId, exerciseId);
     const ex = result.sessionExercise;
     if (!ex) {
       return NextResponse.json({ error: "Failed to add" }, { status: 500 });
     }
 
     return NextResponse.json({
+      scope,
+      planName: "planName" in result ? result.planName : undefined,
       defaultRestSeconds: result.defaultRestSeconds,
       exercise: {
         ...ex,

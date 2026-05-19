@@ -195,6 +195,7 @@ export const sessionExercises = pgTable(
       .notNull()
       .references(() => exercises.id),
     sortOrder: integer("sort_order").notNull().default(0),
+    supersetGroupId: integer("superset_group_id"),
     notes: text("notes"),
     createdAt: timestamp("created_at", { withTimezone: true })
       .notNull()

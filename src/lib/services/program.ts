@@ -1,4 +1,4 @@
-import { and, eq } from "drizzle-orm";
+import { and, eq, isNotNull } from "drizzle-orm";
 import { db } from "@/lib/db";
 import {
   userPrograms,
@@ -9,6 +9,7 @@ import {
   planExerciseVariations,
   exercises,
   muscleGroups,
+  workoutSessions,
   num,
 } from "@/lib/db/schema";
 import { CURRENT_USER_ID } from "@/lib/config";
@@ -157,6 +158,85 @@ export async function getTodayPlan() {
     exercises: resolved,
     deload,
     rotationCount,
+  };
+}
+
+function todayDateString() {
+  return new Date().toISOString().slice(0, 10);
+}
+
+export async function hasCompletedTodayWorkout(planId: number | null) {
+  if (!planId) return false;
+  const today = todayDateString();
+  const [row] = await db
+    .select({ id: workoutSessions.id })
+    .from(workoutSessions)
+    .where(
+      and(
+        eq(workoutSessions.userId, CURRENT_USER_ID),
+        eq(workoutSessions.planId, planId),
+        isNotNull(workoutSessions.endedAt),
+        eq(workoutSessions.sessionDate, today)
+      )
+    )
+    .limit(1);
+  return !!row;
+}
+
+export async function getNextWorkoutPreview() {
+  const active = await getActiveUserProgram();
+  if (!active) return null;
+
+  const { userProgram, program } = active;
+  const allDays = await db
+    .select({
+      programDay: programDays,
+      plan: workoutPlans,
+    })
+    .from(programDays)
+    .leftJoin(workoutPlans, eq(programDays.planId, workoutPlans.id))
+    .where(eq(programDays.programId, program.id))
+    .orderBy(programDays.dayNumber);
+
+  if (allDays.length === 0) return null;
+
+  const maxDay = Math.max(...allDays.map((d) => d.programDay.dayNumber));
+  let dayNum = userProgram.nextDayNumber;
+  let week = userProgram.currentWeek;
+  const today = await getTodayPlan();
+  const completedToday =
+    today?.plan != null &&
+    (await hasCompletedTodayWorkout(today.plan.id));
+
+  if (completedToday) {
+    dayNum += 1;
+    if (dayNum > maxDay) {
+      dayNum = 1;
+      week += 1;
+    }
+  }
+
+  const target = allDays.find((d) => d.programDay.dayNumber === dayNum);
+  if (!target) return null;
+
+  const deload = isDeloadWeek(week, program.deloadWeekInterval);
+  const nextDate = new Date();
+  if (completedToday) {
+    nextDate.setDate(nextDate.getDate() + 1);
+  }
+
+  return {
+    completedToday,
+    week,
+    dayNumber: dayNum,
+    programDay: target.programDay,
+    plan: target.plan,
+    deload,
+    nextDate: nextDate.toLocaleDateString(undefined, {
+      weekday: "short",
+      month: "short",
+      day: "numeric",
+    }),
   };
 }
 

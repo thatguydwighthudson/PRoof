@@ -28,7 +28,24 @@ export async function GET(
     planName,
     exercises: session.exercises.map((ex) => ({
       ...ex,
+      supersetGroupId: ex.supersetGroupId ?? null,
+      muscleGroup: ex.muscleGroup ? { name: ex.muscleGroup.name } : null,
       sets: ex.sets.map((s) => ({ ...s, weightKg: num(s.weightKg) })),
+      lastPerformance: ex.lastPerformance
+        ? {
+            ...ex.lastPerformance,
+            sets: ex.lastPerformance.sets.map((s) => ({
+              ...s,
+              weightKg: num(s.weightKg),
+            })),
+            typical: ex.lastPerformance.typical
+              ? {
+                  ...ex.lastPerformance.typical,
+                  weightKg: ex.lastPerformance.typical.weightKg,
+                }
+              : null,
+          }
+        : null,
       suggestion: ex.suggestion
         ? {
             ...ex.suggestion,

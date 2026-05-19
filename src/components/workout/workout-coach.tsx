@@ -63,15 +63,20 @@ export function WorkoutCoach({
       initial={{ y: "100%" }}
       animate={{ y: 0 }}
       exit={{ y: "100%" }}
-      className="fixed inset-0 z-50 flex flex-col bg-zinc-950"
+      className="fixed inset-0 z-50 flex flex-col bg-zinc-950 pt-[max(1rem,env(safe-area-inset-top))]"
     >
       <div className="flex items-center justify-between border-b border-zinc-800 px-4 py-4">
         <div>
           <h2 className="text-lg font-extrabold">🤖 Ask your coach</h2>
           <p className="text-xs text-zinc-500">{exercise.exercise.name}</p>
         </div>
-        <button type="button" onClick={onClose} aria-label="Close">
-          <X className="h-6 w-6 text-zinc-400" />
+        <button
+          type="button"
+          onClick={onClose}
+          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-zinc-800 text-zinc-300 hover:bg-zinc-700"
+          aria-label="Close"
+        >
+          <X className="h-6 w-6" />
         </button>
       </div>
       <div className="flex-1 space-y-3 overflow-y-auto p-4">

@@ -3,17 +3,19 @@
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
-import { SkipForward } from "lucide-react";
+import { EyeOff, SkipForward } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export function RestTimerOverlay({
   seconds,
   total,
   onSkip,
+  onHide,
 }: {
   seconds: number;
   total: number;
   onSkip: () => void;
+  onHide: () => void;
 }) {
   const [done, setDone] = useState(false);
   const progress = total > 0 ? seconds / total : 0;
@@ -90,13 +92,18 @@ export function RestTimerOverlay({
             </span>
           </div>
         </div>
-        <Button
-          variant="outline"
-          className="mt-8 animate-[shake_0.5s_ease-in-out]"
-          onClick={onSkip}
-        >
-          <SkipForward className="h-4 w-4" /> Skip rest
-        </Button>
+        <motion.div layout className="mt-8 flex flex-col gap-2">
+          <Button
+            variant="outline"
+            className="animate-[shake_0.5s_ease-in-out]"
+            onClick={onHide}
+          >
+            <EyeOff className="h-4 w-4" /> Hide (keep counting)
+          </Button>
+          <Button variant="ghost" onClick={onSkip}>
+            <SkipForward className="h-4 w-4" /> Skip rest
+          </Button>
+        </motion.div>
       </div>
     </motion.div>
   );

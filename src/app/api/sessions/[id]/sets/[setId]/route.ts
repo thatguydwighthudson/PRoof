@@ -1,12 +1,11 @@
 import { NextResponse } from "next/server";
-import { logSet } from "@/lib/services/session";
+import { logSet, deleteSet } from "@/lib/services/session";
 import { inputToKg } from "@/lib/units";
 import { getPreferredUnit } from "@/lib/services/user";
 import { db } from "@/lib/db";
-import { sessionSets, sessionExercises } from "@/lib/db/schema";
+import { sessionSets, sessionExercises, num } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { checkSetForPr, getPersonalRecord } from "@/lib/services/pr";
-import { num } from "@/lib/db/schema";
 
 export async function PATCH(
   req: Request,
@@ -34,7 +33,10 @@ export async function PATCH(
       exerciseId: sessionExercises.exerciseId,
     })
     .from(sessionSets)
-    .innerJoin(sessionExercises, eq(sessionSets.sessionExerciseId, sessionExercises.id))
+    .innerJoin(
+      sessionExercises,
+      eq(sessionSets.sessionExerciseId, sessionExercises.id)
+    )
     .where(eq(sessionSets.id, parseInt(setId, 10)))
     .limit(1);
 
@@ -59,4 +61,25 @@ export async function PATCH(
     set: { ...updated, weightKg: num(updated.weightKg) },
     prHit,
   });
+}
+
+export async function DELETE(
+  _req: Request,
+  { params }: { params: Promise<{ id: string; setId: string }> }
+) {
+  const { setId: setIdStr } = await params;
+  const setId = parseInt(setIdStr, 10);
+
+  if (Number.isNaN(setId)) {
+    return NextResponse.json({ error: "Invalid id" }, { status: 400 });
+  }
+
+  try {
+    await deleteSet(setId);
+    return NextResponse.json({ ok: true });
+  } catch (e) {
+    const message = e instanceof Error ? e.message : "Failed";
+    const status = message.includes("not found") ? 404 : 400;
+    return NextResponse.json({ error: message }, { status: 400 });
+  }
 }

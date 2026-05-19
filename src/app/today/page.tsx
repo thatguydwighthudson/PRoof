@@ -3,12 +3,20 @@ export const dynamic = "force-dynamic";
 import Link from "next/link";
 import { Settings } from "lucide-react";
 import { TodayClient } from "@/components/today/today-client";
-import { getTodayPlan } from "@/lib/services/program";
-import { getActiveSessionOrNull } from "@/lib/services/session";
+import { getTodayPlan, getNextWorkoutPreview } from "@/lib/services/program";
+import {
+  getActiveSessionOrNull,
+  getExercisePreviewsForToday,
+} from "@/lib/services/session";
 
 export default async function TodayPage() {
   const today = await getTodayPlan();
+  const nextWorkout = await getNextWorkoutPreview();
   const active = await getActiveSessionOrNull();
+  const exercisePreviews =
+    today && !today.programDay.restDay && today.plan
+      ? await getExercisePreviewsForToday(today.exercises, today.deload)
+      : [];
 
   return (
     <div className="bg-mesh min-h-screen px-4 pt-6">
@@ -31,7 +39,9 @@ export default async function TodayPage() {
       </header>
       <TodayClient
         initialToday={today}
+        nextWorkout={nextWorkout}
         activeSessionId={active?.id ?? null}
+        exercisePreviews={exercisePreviews}
       />
     </div>
   );

@@ -22,8 +22,39 @@ import { getPendingSuggestion, markSuggestionApplied, computeOverloadSuggestions
 import { updatePersonalRecords } from "./pr";
 import { getPreferredUnit } from "./user";
 import { parseDefaultReps } from "@/lib/parse-reps";
+import { resolveSetDefaults } from "@/lib/workout/set-defaults";
 
 export const USER_ADDED_MARKER = "__user_added__";
+
+export async function getExercisePreviewsForToday(
+  rows: {
+    planExercise: {
+      defaultSets: number;
+      defaultReps: string;
+      defaultWeight: string | null;
+    };
+    exercise: { id: number };
+  }[],
+  deload: boolean
+) {
+  return Promise.all(
+    rows.map(async (row) => {
+      const last = await getLastSessionWeights(row.exercise.id);
+      const suggestion = deload
+        ? null
+        : await getPendingSuggestion(row.exercise.id);
+      const defaults = resolveSetDefaults(row.planExercise, {
+        deload,
+        last,
+        suggestion,
+      });
+      return {
+        exerciseId: row.exercise.id,
+        ...defaults,
+      };
+    })
+  );
+}
 
 export async function getActiveSessionOrNull() {
   const [session] = await db
@@ -139,18 +170,7 @@ export async function startSession(planId?: number) {
 
     const last = await getLastSessionWeights(ex.id);
     const suggestion = deload ? null : await getPendingSuggestion(ex.id);
-
-    let defaultWeight = num(pe.defaultWeight);
-    let defaultSets = pe.defaultSets;
-
-    if (deload && last) {
-      defaultWeight = last.maxWeight * DELOAD_WEIGHT_FACTOR;
-      defaultSets = Math.max(1, Math.ceil(last.sets * DELOAD_SETS_FACTOR));
-    } else if (suggestion) {
-      defaultWeight = num(suggestion.suggestedWeightKg);
-    } else if (last) {
-      defaultWeight = last.maxWeight;
-    }
+    const defaults = resolveSetDefaults(pe, { deload, last, suggestion });
 
     const [se] = await db
       .insert(sessionExercises)
@@ -158,15 +178,16 @@ export async function startSession(planId?: number) {
         sessionId: session.id,
         exerciseId: ex.id,
         sortOrder: pe.sortOrder,
+        supersetGroupId: pe.supersetGroupId,
       })
       .returning();
 
-    const workingSetCount = defaultSets;
-    for (let i = 1; i <= workingSetCount; i++) {
+    for (let i = 1; i <= defaults.setCount; i++) {
       await db.insert(sessionSets).values({
         sessionExerciseId: se.id,
         setNumber: i,
-        weightKg: defaultWeight != null ? String(defaultWeight) : null,
+        reps: defaults.reps,
+        weightKg: defaults.weightKg != null ? String(defaults.weightKg) : null,
         isWarmup: false,
         isCompleted: false,
       });
@@ -205,6 +226,7 @@ export async function cloneSession(sourceSessionId: number) {
         sessionId: session.id,
         exerciseId: ex.exerciseId,
         sortOrder: ex.sortOrder,
+        supersetGroupId: ex.supersetGroupId,
         notes: ex.notes,
       })
       .returning();
@@ -327,10 +349,45 @@ async function getLastSessionPerformance(
       );
 
     if (sets.length > 0) {
-      return { sessionDate: sess.sessionDate, sets };
+      const typical = getTypicalFromSets(sets);
+      return { sessionDate: sess.sessionDate, sets, typical };
     }
   }
   return null;
+}
+
+function getTypicalFromSets(
+  sets: { reps: number | null; weightKg: string | null }[]
+) {
+  const working = sets.filter((s) => s.reps != null || s.weightKg != null);
+  if (working.length === 0) return null;
+
+  const repCounts = new Map<number, number>();
+  const weightCounts = new Map<number, number>();
+  for (const s of working) {
+    if (s.reps != null) {
+      repCounts.set(s.reps, (repCounts.get(s.reps) ?? 0) + 1);
+    }
+    const w = num(s.weightKg);
+    if (w != null) {
+      weightCounts.set(w, (weightCounts.get(w) ?? 0) + 1);
+    }
+  }
+
+  const modeReps =
+    repCounts.size > 0
+      ? [...repCounts.entries()].sort((a, b) => b[1] - a[1])[0][0]
+      : null;
+  const modeWeight =
+    weightCounts.size > 0
+      ? [...weightCounts.entries()].sort((a, b) => b[1] - a[1])[0][0]
+      : null;
+
+  const first = working[0];
+  return {
+    reps: modeReps ?? first.reps,
+    weightKg: modeWeight ?? num(first.weightKg),
+  };
 }
 
 export async function completeSession(
@@ -446,7 +503,11 @@ async function getPlanDefaultsForExercise(
   return anyPlan ?? null;
 }
 
-export async function addSessionExercise(sessionId: number, exerciseId: number) {
+export async function addSessionExercise(
+  sessionId: number,
+  exerciseId: number,
+  options?: { skipUserAddedMarker?: boolean }
+) {
   const [session] = await db
     .select()
     .from(workoutSessions)
@@ -480,21 +541,19 @@ export async function addSessionExercise(sessionId: number, exerciseId: number) 
     session.planId
   );
 
-  const defaultSets = planDefaults?.defaultSets ?? 3;
-  const defaultReps = parseDefaultReps(planDefaults?.defaultReps ?? "8-12");
   const defaultRestSeconds = planDefaults?.defaultRestSeconds ?? 90;
-
   const suggestion = session.isDeload
     ? null
     : await getPendingSuggestion(exerciseId);
-
-  let defaultWeight = num(planDefaults?.defaultWeight);
-  if (suggestion) {
-    defaultWeight = num(suggestion.suggestedWeightKg);
-  } else if (!defaultWeight) {
-    const last = await getLastSessionWeights(exerciseId);
-    if (last) defaultWeight = last.maxWeight;
-  }
+  const last = await getLastSessionWeights(exerciseId);
+  const defaults = resolveSetDefaults(
+    {
+      defaultSets: planDefaults?.defaultSets ?? 3,
+      defaultReps: planDefaults?.defaultReps ?? "8-12",
+      defaultWeight: planDefaults?.defaultWeight ?? null,
+    },
+    { deload: session.isDeload, last, suggestion }
+  );
 
   const [se] = await db
     .insert(sessionExercises)
@@ -502,16 +561,16 @@ export async function addSessionExercise(sessionId: number, exerciseId: number) 
       sessionId,
       exerciseId,
       sortOrder: maxSort + 1,
-      notes: USER_ADDED_MARKER,
+      notes: options?.skipUserAddedMarker ? null : USER_ADDED_MARKER,
     })
     .returning();
 
-  for (let i = 1; i <= defaultSets; i++) {
+  for (let i = 1; i <= defaults.setCount; i++) {
     await db.insert(sessionSets).values({
       sessionExerciseId: se.id,
       setNumber: i,
-      reps: defaultReps,
-      weightKg: defaultWeight != null ? String(defaultWeight) : null,
+      reps: defaults.reps,
+      weightKg: defaults.weightKg != null ? String(defaults.weightKg) : null,
       isWarmup: false,
       isCompleted: false,
     });
@@ -546,6 +605,238 @@ export async function addWarmupSet(sessionExerciseId: number) {
     .returning();
 
   return newSet;
+}
+
+export async function deleteSet(setId: number) {
+  const [set] = await db
+    .select()
+    .from(sessionSets)
+    .where(eq(sessionSets.id, setId))
+    .limit(1);
+
+  if (!set) throw new Error("Set not found");
+
+  await db.delete(sessionSets).where(eq(sessionSets.id, setId));
+}
+
+export async function reorderSessionExercises(
+  sessionId: number,
+  orderedSessionExerciseIds: number[]
+) {
+  const [session] = await db
+    .select()
+    .from(workoutSessions)
+    .where(eq(workoutSessions.id, sessionId))
+    .limit(1);
+
+  if (!session || session.endedAt) throw new Error("Invalid session");
+
+  const rows = await db
+    .select({ id: sessionExercises.id })
+    .from(sessionExercises)
+    .where(eq(sessionExercises.sessionId, sessionId));
+
+  const existingIds = new Set(rows.map((r) => r.id));
+  if (orderedSessionExerciseIds.length !== existingIds.size) {
+    throw new Error("Order must include every exercise in the session");
+  }
+  for (const id of orderedSessionExerciseIds) {
+    if (!existingIds.has(id)) throw new Error("Invalid exercise in order");
+  }
+
+  await Promise.all(
+    orderedSessionExerciseIds.map((id, index) =>
+      db
+        .update(sessionExercises)
+        .set({ sortOrder: index })
+        .where(eq(sessionExercises.id, id))
+    )
+  );
+}
+
+export async function addExerciseToPlanPermanently(
+  sessionId: number,
+  exerciseId: number
+) {
+  const [session] = await db
+    .select()
+    .from(workoutSessions)
+    .where(eq(workoutSessions.id, sessionId))
+    .limit(1);
+
+  if (!session || session.endedAt) throw new Error("Invalid session");
+  if (!session.planId) throw new Error("No plan linked to this session");
+
+  const planId = session.planId;
+
+  const [existingPlan] = await db
+    .select({ id: workoutPlanExercises.id })
+    .from(workoutPlanExercises)
+    .where(
+      and(
+        eq(workoutPlanExercises.planId, planId),
+        eq(workoutPlanExercises.exerciseId, exerciseId)
+      )
+    )
+    .limit(1);
+
+  if (!existingPlan) {
+    const sortRows = await db
+      .select({ sortOrder: workoutPlanExercises.sortOrder })
+      .from(workoutPlanExercises)
+      .where(eq(workoutPlanExercises.planId, planId));
+
+    const maxSort = sortRows.reduce((m, r) => Math.max(m, r.sortOrder), -1);
+    const planDefaults = await getPlanDefaultsForExercise(exerciseId, planId);
+
+    await db.insert(workoutPlanExercises).values({
+      planId,
+      exerciseId,
+      sortOrder: maxSort + 1,
+      defaultSets: planDefaults?.defaultSets ?? 3,
+      defaultReps: planDefaults?.defaultReps ?? "8-12",
+      defaultWeight: planDefaults?.defaultWeight,
+      defaultRestSeconds: planDefaults?.defaultRestSeconds ?? 90,
+    });
+  }
+
+  const inSession = await db
+    .select({ id: sessionExercises.id, notes: sessionExercises.notes })
+    .from(sessionExercises)
+    .where(
+      and(
+        eq(sessionExercises.sessionId, sessionId),
+        eq(sessionExercises.exerciseId, exerciseId)
+      )
+    )
+    .limit(1);
+
+  if (inSession.length > 0) {
+    const row = inSession[0];
+    if (row.notes === USER_ADDED_MARKER) {
+      await db
+        .update(sessionExercises)
+        .set({ notes: null })
+        .where(eq(sessionExercises.id, row.id));
+    }
+    const detail = await getSessionDetail(sessionId);
+    const block = detail?.exercises.find((e) => e.id === row.id);
+    const [plan] = await db
+      .select({ name: workoutPlans.name })
+      .from(workoutPlans)
+      .where(eq(workoutPlans.id, planId))
+      .limit(1);
+    return { sessionExercise: block, planName: plan?.name ?? "this plan", defaultRestSeconds: 90 };
+  }
+
+  const added = await addSessionExercise(sessionId, exerciseId, {
+    skipUserAddedMarker: true,
+  });
+  const [plan] = await db
+    .select({ name: workoutPlans.name })
+    .from(workoutPlans)
+    .where(eq(workoutPlans.id, planId))
+    .limit(1);
+  return { ...added, planName: plan?.name ?? "this plan" };
+}
+
+export async function linkSuperset(
+  sessionId: number,
+  anchorSessionExerciseId: number,
+  partnerSessionExerciseId: number
+) {
+  if (anchorSessionExerciseId === partnerSessionExerciseId) {
+    throw new Error("Pick a different exercise to superset with");
+  }
+
+  const [session] = await db
+    .select()
+    .from(workoutSessions)
+    .where(eq(workoutSessions.id, sessionId))
+    .limit(1);
+
+  if (!session || session.endedAt) throw new Error("Invalid session");
+
+  const rows = await db
+    .select({
+      id: sessionExercises.id,
+      sortOrder: sessionExercises.sortOrder,
+      supersetGroupId: sessionExercises.supersetGroupId,
+    })
+    .from(sessionExercises)
+    .where(eq(sessionExercises.sessionId, sessionId))
+    .orderBy(sessionExercises.sortOrder);
+
+  const anchor = rows.find((r) => r.id === anchorSessionExerciseId);
+  const partner = rows.find((r) => r.id === partnerSessionExerciseId);
+  if (!anchor || !partner) throw new Error("Exercise not in session");
+
+  const pairIds = new Set([anchorSessionExerciseId, partnerSessionExerciseId]);
+  const usedGroups = rows
+    .filter((r) => pairIds.has(r.id) && r.supersetGroupId != null)
+    .map((r) => r.supersetGroupId as number);
+  const groupId =
+    usedGroups.length > 0 ? Math.min(...usedGroups) : Date.now() % 1_000_000;
+
+  await Promise.all(
+    [anchorSessionExerciseId, partnerSessionExerciseId].map((id) =>
+      db
+        .update(sessionExercises)
+        .set({ supersetGroupId: groupId })
+        .where(eq(sessionExercises.id, id))
+    )
+  );
+
+  const ordered = [...rows];
+  const partnerIdx = ordered.findIndex((r) => r.id === partnerSessionExerciseId);
+  const [partnerRow] = ordered.splice(partnerIdx, 1);
+  const anchorIdx = ordered.findIndex((r) => r.id === anchorSessionExerciseId);
+  ordered.splice(anchorIdx + 1, 0, partnerRow);
+
+  await reorderSessionExercises(
+    sessionId,
+    ordered.map((r) => r.id)
+  );
+
+  return { supersetGroupId: groupId };
+}
+
+export async function unlinkFromSuperset(sessionExerciseId: number) {
+  const [row] = await db
+    .select({
+      id: sessionExercises.id,
+      sessionId: sessionExercises.sessionId,
+      supersetGroupId: sessionExercises.supersetGroupId,
+    })
+    .from(sessionExercises)
+    .where(eq(sessionExercises.id, sessionExerciseId))
+    .limit(1);
+
+  if (!row?.supersetGroupId) return;
+
+  const groupMembers = await db
+    .select({ id: sessionExercises.id })
+    .from(sessionExercises)
+    .where(
+      and(
+        eq(sessionExercises.sessionId, row.sessionId),
+        eq(sessionExercises.supersetGroupId, row.supersetGroupId)
+      )
+    );
+
+  const idsToClear =
+    groupMembers.length <= 2
+      ? groupMembers.map((m) => m.id)
+      : [sessionExerciseId];
+
+  await Promise.all(
+    idsToClear.map((id) =>
+      db
+        .update(sessionExercises)
+        .set({ supersetGroupId: null })
+        .where(eq(sessionExercises.id, id))
+    )
+  );
 }
 
 export async function addWorkingSet(sessionExerciseId: number) {

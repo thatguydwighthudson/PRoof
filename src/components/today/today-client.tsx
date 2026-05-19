@@ -13,27 +13,52 @@ import {
   randomRestQuote,
 } from "@/lib/ui/plan-theme";
 import { cn } from "@/lib/utils";
+import type { ResolvedSetDefaults } from "@/lib/workout/set-defaults";
+import { useUser } from "@/components/providers/user-provider";
+import { formatWeightShort } from "@/lib/units";
 
 type TodayData = {
   userProgram: { currentWeek: number; nextDayNumber: number };
   program: { name: string; deloadWeekInterval: number };
   programDay: { label: string | null; restDay: boolean };
   plan: { id: number; name: string; description: string | null } | null;
-  exercises: { exercise: { name: string }; planExercise: { defaultSets: number } }[];
+  exercises: {
+    exercise: { id: number; name: string };
+    planExercise: { defaultSets: number; defaultReps: string };
+  }[];
   deload: boolean;
   rotationCount: number;
 } | null;
 
+type NextWorkoutData = {
+  completedToday: boolean;
+  week: number;
+  dayNumber: number;
+  programDay: { label: string | null; restDay: boolean };
+  plan: { id: number; name: string; description: string | null } | null;
+  deload: boolean;
+  nextDate: string;
+} | null;
+
 export function TodayClient({
   initialToday,
+  nextWorkout,
   activeSessionId,
+  exercisePreviews,
 }: {
   initialToday: TodayData;
+  nextWorkout: NextWorkoutData;
   activeSessionId: number | null;
+  exercisePreviews: (ResolvedSetDefaults & { exerciseId: number })[];
 }) {
   const router = useRouter();
+  const { preferredUnit } = useUser();
   const [loading, setLoading] = useState(false);
   const restQuote = useMemo(() => randomRestQuote(), []);
+  const previewByExerciseId = useMemo(
+    () => new Map(exercisePreviews.map((p) => [p.exerciseId, p])),
+    [exercisePreviews]
+  );
 
   const todayLabel = useMemo(() => {
     return new Date().toLocaleDateString(undefined, {
@@ -91,10 +116,42 @@ export function TodayClient({
   }
 
   const theme = getPlanTheme(initialToday.plan.name);
+  const showNextWorkout =
+    nextWorkout?.completedToday &&
+    nextWorkout.plan != null &&
+    !nextWorkout.programDay.restDay;
 
   return (
     <div className="space-y-4">
       <StreakCard />
+
+      {showNextWorkout && nextWorkout.plan && (
+        <Card className="border-l-4 border-l-sky-500/60 bg-sky-950/20 pl-5">
+          <SectionLabel>Next workout</SectionLabel>
+          <p className="mt-1 text-xs font-medium text-sky-300/90">
+            {nextWorkout.nextDate}
+          </p>
+          <div className="mt-3 flex items-start gap-2">
+            <span className="text-2xl">
+              {getPlanTheme(nextWorkout.plan.name).emoji}
+            </span>
+            <div className="min-w-0">
+              <h2 className="text-xl font-extrabold tracking-tight text-zinc-50">
+                {nextWorkout.plan.name}
+              </h2>
+              <p className="mt-0.5 text-xs text-zinc-500">
+                Week {nextWorkout.week} · Day {nextWorkout.dayNumber}
+                {nextWorkout.programDay.label
+                  ? ` · ${nextWorkout.programDay.label}`
+                  : ""}
+              </p>
+            </div>
+          </div>
+          <p className="mt-3 text-sm text-zinc-400">
+            Today&apos;s workout is done. Rest up — you&apos;re on track.
+          </p>
+        </Card>
+      )}
 
       {initialToday.deload && (
         <div className="rounded-2xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-center text-sm font-semibold text-amber-100">
@@ -114,13 +171,18 @@ export function TodayClient({
           "border-l-4 pl-5",
           theme.border,
           theme.glow,
-          "shadow-xl"
+          "shadow-xl",
+          showNextWorkout && "opacity-75"
         )}
       >
         <SectionLabel>
-          Week {initialToday.userProgram.currentWeek} · Day{" "}
+          {showNextWorkout ? "Today's workout" : "Today's workout"} · Week{" "}
+          {initialToday.userProgram.currentWeek} · Day{" "}
           {initialToday.userProgram.nextDayNumber}
         </SectionLabel>
+        {showNextWorkout && (
+          <p className="mt-1 text-xs font-semibold text-emerald-400">Completed ✓</p>
+        )}
         <p className="mt-2 text-xs text-zinc-500">{todayLabel}</p>
         <div className="mt-3 flex items-start gap-2">
           <span className="text-3xl">{theme.emoji}</span>
@@ -145,16 +207,31 @@ export function TodayClient({
           <span className="text-zinc-500">exercises</span>
         </p>
         <ul className="mt-4 max-h-52 space-y-2 overflow-y-auto overscroll-contain border-t border-zinc-800/80 pt-4 pr-1">
-          {initialToday.exercises.map((e, i) => (
-            <li key={i} className="flex justify-between gap-3 text-sm">
-              <span className="min-w-0 break-words text-zinc-200">
-                {e.exercise.name}
-              </span>
-              <span className="shrink-0 font-bold tabular-nums text-zinc-500">
-                {e.planExercise.defaultSets} sets
-              </span>
-            </li>
-          ))}
+          {initialToday.exercises.map((e, i) => {
+            const preview = previewByExerciseId.get(e.exercise.id);
+            const setLabel = preview
+              ? `${preview.setCount}×${preview.repsLabel}`
+              : `${e.planExercise.defaultSets}×${e.planExercise.defaultReps}`;
+            const weightLabel =
+              preview?.weightKg != null
+                ? formatWeightShort(preview.weightKg, preferredUnit)
+                : null;
+            return (
+              <li key={i} className="flex justify-between gap-3 text-sm">
+                <span className="min-w-0 break-words text-zinc-200">
+                  {e.exercise.name}
+                </span>
+                <span className="shrink-0 text-right font-bold tabular-nums text-zinc-500">
+                  {setLabel}
+                  {weightLabel && (
+                    <span className="block text-[11px] font-semibold text-zinc-600">
+                      @ {weightLabel}
+                    </span>
+                  )}
+                </span>
+              </li>
+            );
+          })}
         </ul>
       </Card>
 
