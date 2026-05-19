@@ -16,7 +16,9 @@ export function AppChrome({ children }: { children: React.ReactNode }) {
 
   return (
     <>
-      <main className="mx-auto min-h-full max-w-lg pb-nav">{children}</main>
+      <main className="mx-auto min-h-full max-w-lg pb-nav pt-safe">
+        {children}
+      </main>
       <BottomNav />
       <InstallPrompt />
       <Toaster theme="dark" position="top-center" />

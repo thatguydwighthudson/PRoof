@@ -35,6 +35,10 @@ input[type="number"]::-webkit-outer-spin-button {
   padding-bottom: calc(5rem + env(safe-area-inset-bottom));
 }
 
+.pt-safe {
+  padding-top: env(safe-area-inset-top);
+}
+
 @keyframes shake {
   0%,
   100% {
