@@ -144,20 +144,17 @@ export function TodayClient({
           </span>{" "}
           <span className="text-zinc-500">exercises</span>
         </p>
-        <ul className="mt-4 space-y-2 border-t border-zinc-800/80 pt-4">
-          {initialToday.exercises.slice(0, 5).map((e, i) => (
-            <li key={i} className="flex justify-between text-sm">
-              <span className="text-zinc-200">{e.exercise.name}</span>
-              <span className="font-bold tabular-nums text-zinc-500">
+        <ul className="mt-4 max-h-52 space-y-2 overflow-y-auto overscroll-contain border-t border-zinc-800/80 pt-4 pr-1">
+          {initialToday.exercises.map((e, i) => (
+            <li key={i} className="flex justify-between gap-3 text-sm">
+              <span className="min-w-0 break-words text-zinc-200">
+                {e.exercise.name}
+              </span>
+              <span className="shrink-0 font-bold tabular-nums text-zinc-500">
                 {e.planExercise.defaultSets} sets
               </span>
             </li>
           ))}
-          {initialToday.exercises.length > 5 && (
-            <li className="text-sm text-zinc-500">
-              +{initialToday.exercises.length - 5} more
-            </li>
-          )}
         </ul>
       </Card>
 

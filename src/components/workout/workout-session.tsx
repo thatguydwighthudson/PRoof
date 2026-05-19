@@ -160,6 +160,16 @@ export function WorkoutSession({ sessionId }: { sessionId: number }) {
     }
   };
 
+  const addWorkingSet = async () => {
+    if (!current) return;
+    await fetch(`/api/sessions/${sessionId}/sets`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ sessionExerciseId: current.id }),
+    });
+    await load();
+  };
+
   const addWarmup = async () => {
     if (!current) return;
     await fetch(`/api/sessions/${sessionId}/warmup`, {
@@ -442,14 +452,24 @@ export function WorkoutSession({ sessionId }: { sessionId: number }) {
         </p>
       )}
 
-      <Button
-        variant="outline"
-        size="sm"
-        className="mx-auto mt-4 w-fit border-zinc-700"
-        onClick={addWarmup}
-      >
-        <Plus className="h-4 w-4" /> Add Warm-up Set
-      </Button>
+      <motion.div layout className="mx-auto mt-4 flex w-full max-w-sm gap-2">
+        <Button
+          variant="outline"
+          size="sm"
+          className="flex-1 border-emerald-600/50 bg-emerald-950/20 text-emerald-300 hover:bg-emerald-950/40"
+          onClick={addWorkingSet}
+        >
+          <Plus className="h-4 w-4" /> Add Set
+        </Button>
+        <Button
+          variant="outline"
+          size="sm"
+          className="flex-1 border-zinc-700"
+          onClick={addWarmup}
+        >
+          <Plus className="h-4 w-4" /> Warm-up
+        </Button>
+      </motion.div>
 
       <div className="mt-4 flex-1 space-y-2">
         {[...warmupSets, ...workingSets].map((set) => (

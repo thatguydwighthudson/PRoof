@@ -32,14 +32,18 @@ function ExerciseRow({ ex }: { ex: ExerciseListItem }) {
               className={cn("mt-1.5 h-2.5 w-2.5 shrink-0 rounded-full", dot)}
             />
             <div className="min-w-0">
-              <p className="truncate font-bold text-zinc-100">{ex.name}</p>
+              <p className="break-words font-bold leading-snug text-zinc-100">
+                {ex.name}
+              </p>
               <p className="mt-0.5 text-xs text-zinc-500">
                 {ex.equipment ?? "—"}
                 {ex.isBodyweight ? " · Bodyweight" : ""}
               </p>
             </div>
           </div>
-          <DifficultyPill difficulty={ex.difficulty} />
+          <div className="shrink-0 self-start">
+            <DifficultyPill difficulty={ex.difficulty} />
+          </div>
         </div>
       </div>
     </Link>

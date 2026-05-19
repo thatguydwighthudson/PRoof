@@ -548,6 +548,31 @@ export async function addWarmupSet(sessionExerciseId: number) {
   return newSet;
 }
 
+export async function addWorkingSet(sessionExerciseId: number) {
+  const sets = await db
+    .select()
+    .from(sessionSets)
+    .where(eq(sessionSets.sessionExerciseId, sessionExerciseId));
+
+  const working = sets.filter((s) => !s.isWarmup);
+  const maxSetNum = working.reduce((m, s) => Math.max(m, s.setNumber), 0);
+  const lastWorking = [...working].sort((a, b) => b.setNumber - a.setNumber)[0];
+
+  const [newSet] = await db
+    .insert(sessionSets)
+    .values({
+      sessionExerciseId,
+      setNumber: maxSetNum + 1,
+      reps: lastWorking?.reps ?? null,
+      weightKg: lastWorking?.weightKg ?? null,
+      isWarmup: false,
+      isCompleted: false,
+    })
+    .returning();
+
+  return newSet;
+}
+
 async function getActiveSessionExercise(
   sessionId: number,
   sessionExerciseId: number
