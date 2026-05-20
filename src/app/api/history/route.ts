@@ -9,9 +9,10 @@ import {
   sessionSets,
   sessionCardio,
 } from "@/lib/db/schema";
-import { CURRENT_USER_ID } from "@/lib/config";
+import { requireUserId } from "@/lib/services/user";
 
 export async function GET() {
+  const userId = await requireUserId();
   const sessions = await db
     .select({
       session: workoutSessions,
@@ -21,7 +22,7 @@ export async function GET() {
     .leftJoin(workoutPlans, eq(workoutSessions.planId, workoutPlans.id))
     .where(
       and(
-        eq(workoutSessions.userId, CURRENT_USER_ID),
+        eq(workoutSessions.userId, userId),
         isNotNull(workoutSessions.endedAt),
         eq(workoutSessions.isPreview, false)
       )

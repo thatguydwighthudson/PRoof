@@ -1,9 +1,10 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { pushSubscriptions } from "@/lib/db/schema";
-import { CURRENT_USER_ID } from "@/lib/config";
+import { requireUserId } from "@/lib/services/user";
 
 export async function POST(req: Request) {
+  const userId = await requireUserId();
   const body = await req.json();
   const endpoint = body.endpoint as string;
   const keys = body.keys as { p256dh: string; auth: string };
@@ -11,7 +12,7 @@ export async function POST(req: Request) {
   await db
     .insert(pushSubscriptions)
     .values({
-      userId: CURRENT_USER_ID,
+      userId,
       endpoint,
       p256dh: keys.p256dh,
       auth: keys.auth,

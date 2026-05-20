@@ -7,7 +7,7 @@ import {
   workoutPlans,
   workoutSessions,
 } from "@/lib/db/schema";
-import { CURRENT_USER_ID } from "@/lib/config";
+import { requireUserId } from "@/lib/services/user";
 import { muscleGroupsForSplit } from "@/lib/split-muscles";
 
 export type SuggestedExercise = {
@@ -29,12 +29,13 @@ async function getSessionExerciseIds(sessionId: number) {
 
 /** Per muscle group: exercise IDs done in the last 2 sessions that trained that group. */
 async function recentDoneByMuscleGroup(): Promise<Map<string, Set<number>>> {
+  const userId = await requireUserId();
   const recentSessions = await db
     .select({ id: workoutSessions.id })
     .from(workoutSessions)
     .where(
       and(
-        eq(workoutSessions.userId, CURRENT_USER_ID),
+        eq(workoutSessions.userId, userId),
         isNotNull(workoutSessions.endedAt)
       )
     )
@@ -80,7 +81,7 @@ export async function suggestExercises(params: {
   sessionId: number;
   userId?: number;
 }): Promise<SuggestedExercise[]> {
-  const userId = params.userId ?? CURRENT_USER_ID;
+  const userId = params.userId ?? (await requireUserId());
 
   const [plan] = await db
     .select()

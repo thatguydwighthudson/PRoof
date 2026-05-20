@@ -9,7 +9,6 @@ import {
   programDays,
   workoutPlans,
 } from "@/lib/db/schema";
-import { CURRENT_USER_ID } from "@/lib/config";
 
 export async function GET(req: Request) {
   const auth = req.headers.get("authorization");
@@ -29,53 +28,60 @@ export async function GET(req: Request) {
     privateKey
   );
 
-  const [reminder] = await db
+  const activeReminders = await db
     .select()
     .from(workoutReminders)
-    .where(eq(workoutReminders.userId, CURRENT_USER_ID))
-    .limit(1);
+    .where(eq(workoutReminders.isActive, true));
 
-  if (!reminder?.isActive) {
-    return NextResponse.json({ sent: 0, reason: "reminders disabled" });
-  }
+  let sent = 0;
 
-  const [up] = await db
-    .select()
-    .from(userPrograms)
-    .where(eq(userPrograms.userId, CURRENT_USER_ID))
-    .limit(1);
-
-  let title = "Your workout is ready";
-  if (up) {
-    const [day] = await db
-      .select({ label: programDays.label, plan: workoutPlans })
-      .from(programDays)
-      .leftJoin(workoutPlans, eq(programDays.planId, workoutPlans.id))
+  for (const reminder of activeReminders) {
+    const [up] = await db
+      .select()
+      .from(userPrograms)
       .where(
         and(
-          eq(programDays.programId, up.programId),
-          eq(programDays.dayNumber, up.nextDayNumber)
+          eq(userPrograms.userId, reminder.userId),
+          eq(userPrograms.isActive, true)
         )
       )
       .limit(1);
-    const name = day?.label ?? day?.plan?.name ?? "workout";
-    title = `Your ${name} workout is ready`;
-  }
 
-  const subs = await db.select().from(pushSubscriptions);
-  let sent = 0;
-  for (const sub of subs) {
-    try {
-      await webpush.sendNotification(
-        {
-          endpoint: sub.endpoint,
-          keys: { p256dh: sub.p256dh, auth: sub.auth },
-        },
-        JSON.stringify({ title, body: "Time to train 💪" })
-      );
-      sent++;
-    } catch {
-      /* subscription expired */
+    let title = "Your workout is ready";
+    if (up) {
+      const [day] = await db
+        .select({ label: programDays.label, plan: workoutPlans })
+        .from(programDays)
+        .leftJoin(workoutPlans, eq(programDays.planId, workoutPlans.id))
+        .where(
+          and(
+            eq(programDays.programId, up.programId),
+            eq(programDays.dayNumber, up.nextDayNumber)
+          )
+        )
+        .limit(1);
+      const name = day?.label ?? day?.plan?.name ?? "workout";
+      title = `Your ${name} workout is ready`;
+    }
+
+    const subs = await db
+      .select()
+      .from(pushSubscriptions)
+      .where(eq(pushSubscriptions.userId, reminder.userId));
+
+    for (const sub of subs) {
+      try {
+        await webpush.sendNotification(
+          {
+            endpoint: sub.endpoint,
+            keys: { p256dh: sub.p256dh, auth: sub.auth },
+          },
+          JSON.stringify({ title, body: "Time to train 💪" })
+        );
+        sent++;
+      } catch {
+        /* subscription expired */
+      }
     }
   }
 

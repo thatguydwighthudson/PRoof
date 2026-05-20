@@ -8,15 +8,16 @@ import {
   sessionCardio,
   bodyMetrics,
 } from "@/lib/db/schema";
-import { CURRENT_USER_ID } from "@/lib/config";
+import { requireUserId } from "@/lib/services/user";
 
 export async function GET(req: Request) {
+  const userId = await requireUserId();
   const format = new URL(req.url).searchParams.get("format") ?? "json";
 
   const sessions = await db
     .select()
     .from(workoutSessions)
-    .where(eq(workoutSessions.userId, CURRENT_USER_ID))
+    .where(eq(workoutSessions.userId, userId))
     .orderBy(desc(workoutSessions.sessionDate));
 
   const full = await Promise.all(
@@ -45,7 +46,7 @@ export async function GET(req: Request) {
   const metrics = await db
     .select()
     .from(bodyMetrics)
-    .where(eq(bodyMetrics.userId, CURRENT_USER_ID));
+    .where(eq(bodyMetrics.userId, userId));
 
   if (format === "csv") {
     const header = "id,date,plan_id,duration_mins,is_deload,feel\n";

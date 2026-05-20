@@ -3,10 +3,12 @@ export const dynamic = "force-dynamic";
 import { eq, or, isNull } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { exercises, muscleGroups } from "@/lib/db/schema";
-import { CURRENT_USER_ID } from "@/lib/config";
+import { getAuthenticatedUser } from "@/lib/auth";
 import { ExerciseBrowser } from "@/components/exercises/exercise-browser";
 
 export default async function ExercisesPage() {
+  const user = await getAuthenticatedUser();
+  const userId = user.id;
   const list = await db
     .select({
       exercise: exercises,
@@ -15,7 +17,7 @@ export default async function ExercisesPage() {
     .from(exercises)
     .leftJoin(muscleGroups, eq(exercises.muscleGroupId, muscleGroups.id))
     .where(
-      or(isNull(exercises.userId), eq(exercises.userId, CURRENT_USER_ID))
+      or(isNull(exercises.userId), eq(exercises.userId, userId))
     )
     .orderBy(exercises.name);
 

@@ -12,11 +12,8 @@ import {
   muscleGroups,
   num,
 } from "@/lib/db/schema";
-import {
-  CURRENT_USER_ID,
-  DELOAD_SETS_FACTOR,
-  DELOAD_WEIGHT_FACTOR,
-} from "@/lib/config";
+import { DELOAD_SETS_FACTOR, DELOAD_WEIGHT_FACTOR } from "@/lib/config";
+import { requireUserId } from "@/lib/services/user";
 import { getTodayPlan, advanceProgramDay } from "./program";
 import { getPendingSuggestion, markSuggestionApplied, computeOverloadSuggestions } from "./overload";
 import { updatePersonalRecords } from "./pr";
@@ -57,12 +54,13 @@ export async function getExercisePreviewsForToday(
 }
 
 export async function getActiveSessionOrNull() {
+  const userId = await requireUserId();
   const [session] = await db
     .select()
     .from(workoutSessions)
     .where(
       and(
-        eq(workoutSessions.userId, CURRENT_USER_ID),
+        eq(workoutSessions.userId, userId),
         isNull(workoutSessions.endedAt)
       )
     )
@@ -77,13 +75,14 @@ function todayDateString() {
 }
 
 async function getLastCompletedPlanIdToday() {
+  const userId = await requireUserId();
   const today = todayDateString();
   const [row] = await db
     .select({ planId: workoutSessions.planId })
     .from(workoutSessions)
     .where(
       and(
-        eq(workoutSessions.userId, CURRENT_USER_ID),
+        eq(workoutSessions.userId, userId),
         isNotNull(workoutSessions.endedAt),
         eq(workoutSessions.sessionDate, today),
         eq(workoutSessions.isPreview, false)
@@ -96,12 +95,13 @@ async function getLastCompletedPlanIdToday() {
 }
 
 async function abandonPreviewSession(sessionId: number) {
+  const userId = await requireUserId();
   await db
     .delete(workoutSessions)
     .where(
       and(
         eq(workoutSessions.id, sessionId),
-        eq(workoutSessions.userId, CURRENT_USER_ID),
+        eq(workoutSessions.userId, userId),
         eq(workoutSessions.isPreview, true)
       )
     );
@@ -118,10 +118,11 @@ async function createSessionForPlan(
   deload: boolean,
   isPreview: boolean
 ) {
+  const userId = await requireUserId();
   const [session] = await db
     .insert(workoutSessions)
     .values({
-      userId: CURRENT_USER_ID,
+      userId,
       planId: pid,
       startedAt: new Date(),
       isDeload: deload,
@@ -185,12 +186,13 @@ async function createSessionForPlan(
 }
 
 async function getLastSessionWeights(exerciseId: number) {
+  const userId = await requireUserId();
   const recentSessions = await db
     .select({ id: workoutSessions.id })
     .from(workoutSessions)
     .where(
       and(
-        eq(workoutSessions.userId, CURRENT_USER_ID),
+        eq(workoutSessions.userId, userId),
         eq(workoutSessions.isDeload, false)
       )
     )
@@ -282,13 +284,14 @@ export async function startSession(
 }
 
 export async function cloneSession(sourceSessionId: number) {
+  const userId = await requireUserId();
   const source = await getSessionDetail(sourceSessionId);
   if (!source) throw new Error("Session not found");
 
   const [session] = await db
     .insert(workoutSessions)
     .values({
-      userId: CURRENT_USER_ID,
+      userId,
       planId: source.planId,
       startedAt: new Date(),
       isDeload: false,
@@ -395,12 +398,13 @@ async function getLastSessionPerformance(
   exerciseId: number,
   excludeSessionId: number
 ) {
+  const userId = await requireUserId();
   const recentSessions = await db
     .select({ id: workoutSessions.id, sessionDate: workoutSessions.sessionDate })
     .from(workoutSessions)
     .where(
       and(
-        eq(workoutSessions.userId, CURRENT_USER_ID),
+        eq(workoutSessions.userId, userId),
         ne(workoutSessions.id, excludeSessionId)
       )
     )

@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { SectionLabel } from "@/components/ui/section-label";
 import { cn } from "@/lib/utils";
+import { AccountSettings } from "@/components/settings/account-settings";
 
 export default function SettingsPage() {
   const { preferredUnit, setUnit } = useUser();
@@ -135,6 +136,8 @@ export default function SettingsPage() {
           📊 Session history (CSV)
         </Button>
       </Card>
+
+      <AccountSettings />
 
       <Link href="/body" className="mt-4 block">
         <Button

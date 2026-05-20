@@ -2,9 +2,10 @@ import { NextResponse } from "next/server";
 import { eq, or, isNull } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { exercises, muscleGroups } from "@/lib/db/schema";
-import { CURRENT_USER_ID } from "@/lib/config";
+import { requireUserId } from "@/lib/services/user";
 
 export async function GET() {
+  const userId = await requireUserId();
   const list = await db
     .select({
       id: exercises.id,
@@ -17,7 +18,7 @@ export async function GET() {
     .from(exercises)
     .leftJoin(muscleGroups, eq(exercises.muscleGroupId, muscleGroups.id))
     .where(
-      or(isNull(exercises.userId), eq(exercises.userId, CURRENT_USER_ID))
+      or(isNull(exercises.userId), eq(exercises.userId, userId))
     )
     .orderBy(exercises.name);
 

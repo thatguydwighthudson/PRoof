@@ -1,6 +1,7 @@
 import {
   pgTable,
   serial,
+  uuid,
   varchar,
   text,
   boolean,
@@ -20,6 +21,10 @@ export const users = pgTable("users", {
   id: serial("id").primaryKey(),
   name: varchar("name", { length: 150 }).notNull(),
   email: varchar("email", { length: 255 }).unique(),
+  passwordHash: text("password_hash").notNull().default(""),
+  trainingLevel: varchar("training_level", { length: 20 })
+    .notNull()
+    .default("beginner"),
   preferredUnit: varchar("preferred_unit", { length: 3 })
     .notNull()
     .default("lbs"),
@@ -27,6 +32,23 @@ export const users = pgTable("users", {
     .notNull()
     .defaultNow(),
 });
+
+/** Database auth sessions (cookie `session_id`). Not workout_sessions. */
+export const authSessions = pgTable(
+  "sessions",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: integer("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
+  },
+  (table) => [
+    index("sessions_user_id_idx").on(table.userId),
+    index("sessions_expires_at_idx").on(table.expiresAt),
+  ]
+);
 
 export const muscleGroups = pgTable("muscle_groups", {
   id: serial("id").primaryKey(),
@@ -481,6 +503,7 @@ export const workoutSessionsRelations = relations(
 
 // Inferred types
 export type User = typeof users.$inferSelect;
+export type AuthSession = typeof authSessions.$inferSelect;
 export type Exercise = typeof exercises.$inferSelect;
 export type WorkoutPlan = typeof workoutPlans.$inferSelect;
 export type WorkoutPlanExercise = typeof workoutPlanExercises.$inferSelect;

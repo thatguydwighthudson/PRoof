@@ -9,13 +9,12 @@ import {
   num,
 } from "@/lib/db/schema";
 import {
-  CURRENT_USER_ID,
   LOWER_BODY_REGIONS,
   UPPER_BODY_OVERLOAD_PCT,
   LOWER_BODY_OVERLOAD_PCT,
 } from "@/lib/config";
 import { kgToLbs, roundToHalf } from "@/lib/units";
-import { getPreferredUnit } from "./user";
+import { getPreferredUnit, requireUserId } from "./user";
 
 function isLowerBody(muscleGroupName: string | null | undefined): boolean {
   if (!muscleGroupName) return false;
@@ -32,12 +31,13 @@ function roundSuggestedKg(kg: number, unit: "lbs" | "kg"): number {
 }
 
 export async function getPendingSuggestion(exerciseId: number) {
+  const userId = await requireUserId();
   const [s] = await db
     .select()
     .from(progressiveOverloadSuggestions)
     .where(
       and(
-        eq(progressiveOverloadSuggestions.userId, CURRENT_USER_ID),
+        eq(progressiveOverloadSuggestions.userId, userId),
         eq(progressiveOverloadSuggestions.exerciseId, exerciseId),
         eq(progressiveOverloadSuggestions.isApplied, false)
       )
@@ -48,12 +48,13 @@ export async function getPendingSuggestion(exerciseId: number) {
 }
 
 export async function markSuggestionApplied(exerciseId: number) {
+  const userId = await requireUserId();
   await db
     .update(progressiveOverloadSuggestions)
     .set({ isApplied: true })
     .where(
       and(
-        eq(progressiveOverloadSuggestions.userId, CURRENT_USER_ID),
+        eq(progressiveOverloadSuggestions.userId, userId),
         eq(progressiveOverloadSuggestions.exerciseId, exerciseId),
         eq(progressiveOverloadSuggestions.isApplied, false)
       )
@@ -61,6 +62,7 @@ export async function markSuggestionApplied(exerciseId: number) {
 }
 
 export async function computeOverloadSuggestions(sessionId: number) {
+  const userId = await requireUserId();
   const unit = await getPreferredUnit();
 
   const sessionExList = await db
@@ -108,7 +110,7 @@ export async function computeOverloadSuggestions(sessionId: number) {
     await db
       .insert(progressiveOverloadSuggestions)
       .values({
-        userId: CURRENT_USER_ID,
+        userId,
         exerciseId: exercise.id,
         lastWeightKg: String(maxWeight),
         suggestedWeightKg: String(suggestedKg),

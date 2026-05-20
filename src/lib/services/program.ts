@@ -12,9 +12,10 @@ import {
   workoutSessions,
   num,
 } from "@/lib/db/schema";
-import { CURRENT_USER_ID } from "@/lib/config";
+import { requireUserId } from "@/lib/services/user";
 
 export async function getActiveUserProgram() {
+  const userId = await requireUserId();
   const [up] = await db
     .select({
       userProgram: userPrograms,
@@ -24,7 +25,7 @@ export async function getActiveUserProgram() {
     .innerJoin(programs, eq(userPrograms.programId, programs.id))
     .where(
       and(
-        eq(userPrograms.userId, CURRENT_USER_ID),
+        eq(userPrograms.userId, userId),
         eq(userPrograms.isActive, true)
       )
     )
@@ -167,13 +168,14 @@ function todayDateString() {
 
 export async function hasCompletedTodayWorkout(planId: number | null) {
   if (!planId) return false;
+  const userId = await requireUserId();
   const today = todayDateString();
   const [row] = await db
     .select({ id: workoutSessions.id })
     .from(workoutSessions)
     .where(
       and(
-        eq(workoutSessions.userId, CURRENT_USER_ID),
+        eq(workoutSessions.userId, userId),
         eq(workoutSessions.planId, planId),
         isNotNull(workoutSessions.endedAt),
         eq(workoutSessions.sessionDate, today),
@@ -186,13 +188,14 @@ export async function hasCompletedTodayWorkout(planId: number | null) {
 
 /** Any finished (non-preview) session today. */
 export async function hasCompletedWorkoutToday() {
+  const userId = await requireUserId();
   const today = todayDateString();
   const [row] = await db
     .select({ id: workoutSessions.id })
     .from(workoutSessions)
     .where(
       and(
-        eq(workoutSessions.userId, CURRENT_USER_ID),
+        eq(workoutSessions.userId, userId),
         isNotNull(workoutSessions.endedAt),
         eq(workoutSessions.sessionDate, today),
         eq(workoutSessions.isPreview, false)

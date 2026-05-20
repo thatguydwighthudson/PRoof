@@ -9,8 +9,12 @@ import { Toaster } from "sonner";
 export function AppChrome({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const isDebug = pathname.startsWith("/debug");
+  const isAuth =
+    pathname.startsWith("/signin") ||
+    pathname.startsWith("/signup") ||
+    pathname.startsWith("/onboarding");
 
-  if (isDebug) {
+  if (isDebug || isAuth) {
     return <>{children}</>;
   }
 

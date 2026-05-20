@@ -6,8 +6,7 @@ import { eq, and, or, isNull } from "drizzle-orm";
 import { ChevronLeft, ExternalLink } from "lucide-react";
 import { db } from "@/lib/db";
 import { exercises, muscleGroups, num } from "@/lib/db/schema";
-import { CURRENT_USER_ID } from "@/lib/config";
-import { getCurrentUser } from "@/lib/services/user";
+import { getAuthenticatedUser } from "@/lib/auth";
 import { getPersonalRecord } from "@/lib/services/pr";
 import { Card } from "@/components/ui/card";
 import { SectionLabel } from "@/components/ui/section-label";
@@ -25,6 +24,8 @@ export default async function ExerciseDetailPage({
   const exerciseId = parseInt(id, 10);
   if (Number.isNaN(exerciseId)) notFound();
 
+  const user = await getAuthenticatedUser();
+  const userId = user.id;
   const [row] = await db
     .select({
       exercise: exercises,
@@ -35,7 +36,7 @@ export default async function ExerciseDetailPage({
     .where(
       and(
         eq(exercises.id, exerciseId),
-        or(isNull(exercises.userId), eq(exercises.userId, CURRENT_USER_ID))
+        or(isNull(exercises.userId), eq(exercises.userId, userId))
       )
     )
     .limit(1);
@@ -43,7 +44,6 @@ export default async function ExerciseDetailPage({
   if (!row) notFound();
 
   const { exercise, muscleGroup } = row;
-  const user = await getCurrentUser();
   const unit = (user.preferredUnit as PreferredUnit) ?? "lbs";
   const pr = await getPersonalRecord(exerciseId);
 

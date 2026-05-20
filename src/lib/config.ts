@@ -1,5 +1,3 @@
-export const CURRENT_USER_ID = 1;
-
 export const LBS_PER_KG = 2.20462;
 
 export const UPPER_BODY_OVERLOAD_PCT = 0.025;

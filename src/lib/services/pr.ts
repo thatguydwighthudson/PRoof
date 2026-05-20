@@ -6,7 +6,7 @@ import {
   personalRecords,
   num,
 } from "@/lib/db/schema";
-import { CURRENT_USER_ID } from "@/lib/config";
+import { requireUserId } from "@/lib/services/user";
 
 export type PrCheckResult = {
   isWeightPr: boolean;
@@ -15,12 +15,13 @@ export type PrCheckResult = {
 };
 
 export async function getPersonalRecord(exerciseId: number) {
+  const userId = await requireUserId();
   const [pr] = await db
     .select()
     .from(personalRecords)
     .where(
       and(
-        eq(personalRecords.userId, CURRENT_USER_ID),
+        eq(personalRecords.userId, userId),
         eq(personalRecords.exerciseId, exerciseId)
       )
     )
@@ -59,6 +60,7 @@ export function checkSetForPr(
 }
 
 export async function updatePersonalRecords(sessionId: number) {
+  const userId = await requireUserId();
   const sessionExList = await db
     .select()
     .from(sessionExercises)
@@ -129,7 +131,7 @@ export async function updatePersonalRecords(sessionId: number) {
         .where(eq(personalRecords.id, existing.id));
     } else {
       await db.insert(personalRecords).values({
-        userId: CURRENT_USER_ID,
+        userId,
         exerciseId: se.exerciseId,
         bestWeightKg: bestWeight > 0 ? String(bestWeight) : null,
         bestWeightReps: bestWeight > 0 ? bestWeightReps : null,

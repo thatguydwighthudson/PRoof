@@ -19,6 +19,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { useUser } from "@/components/providers/user-provider";
+import { workoutLogTitle } from "@/lib/greeting";
 import { displayWeightValue, formatWeightShort } from "@/lib/units";
 import { FEEL_EMOJIS, feelLabel } from "@/lib/ui/feel";
 import { PlateCalculator } from "@/components/workout/plate-calculator";
@@ -101,7 +102,7 @@ export function WorkoutSession({
   previewFromUrl?: boolean;
 }) {
   const router = useRouter();
-  const { preferredUnit } = useUser();
+  const { preferredUnit, userName } = useUser();
   const [session, setSession] = useState<SessionData | null>(null);
   const [exerciseIndex, setExerciseIndex] = useState(0);
   const [restSeconds, setRestSeconds] = useState<number | null>(null);
@@ -454,6 +455,12 @@ export function WorkoutSession({
         <div className="mb-3 rounded-2xl border border-amber-500/30 bg-amber-500/10 py-2.5 text-center text-sm font-bold text-amber-100">
           😴 Deload Week — Recovery is progress
         </div>
+      )}
+
+      {userName && (
+        <p className="mb-2 text-center text-xs font-semibold uppercase tracking-wider text-zinc-500">
+          {workoutLogTitle(userName)}
+        </p>
       )}
 
       <div className="mb-4 flex items-center justify-between gap-2">
