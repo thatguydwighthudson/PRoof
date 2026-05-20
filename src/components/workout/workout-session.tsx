@@ -4,12 +4,9 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  ArrowDown,
-  ArrowUp,
-  ChevronDown,
   ChevronLeft,
   ChevronRight,
-  ChevronUp,
+  Dumbbell,
   ExternalLink,
   Info,
   Link2,
@@ -21,7 +18,6 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
-import { SectionLabel } from "@/components/ui/section-label";
 import { useUser } from "@/components/providers/user-provider";
 import { displayWeightValue, formatWeightShort } from "@/lib/units";
 import { FEEL_EMOJIS, feelLabel } from "@/lib/ui/feel";
@@ -30,10 +26,7 @@ import { WorkoutCoach } from "@/components/workout/workout-coach";
 import { RestTimerOverlay } from "@/components/workout/rest-timer-overlay";
 import { RestTimerMinimized } from "@/components/workout/rest-timer-minimized";
 import { WearableNotice } from "@/components/workout/wearable-notice";
-import {
-  getExerciseProgress,
-  progressLabel,
-} from "@/lib/workout/exercise-progress";
+import { ExerciseListSheet } from "@/components/workout/exercise-list-sheet";
 import { youtubeSearchUrl } from "@/lib/utils";
 import { PrBanner } from "@/components/workout/pr-banner";
 import { AddExerciseSheet } from "@/components/workout/add-exercise-sheet";
@@ -88,6 +81,7 @@ type ExerciseBlock = {
 type SessionData = {
   id: number;
   isDeload: boolean;
+  isPreview: boolean;
   planId: number | null;
   planName: string | null;
   exercises: ExerciseBlock[];
@@ -95,7 +89,17 @@ type SessionData = {
 
 const REST_DEFAULT = 90;
 
-export function WorkoutSession({ sessionId }: { sessionId: number }) {
+function countCompletedWorkingSets(ex: ExerciseBlock) {
+  return ex.sets.filter((s) => !s.isWarmup && s.isCompleted).length;
+}
+
+export function WorkoutSession({
+  sessionId,
+  previewFromUrl = false,
+}: {
+  sessionId: number;
+  previewFromUrl?: boolean;
+}) {
   const router = useRouter();
   const { preferredUnit } = useUser();
   const [session, setSession] = useState<SessionData | null>(null);
@@ -108,8 +112,9 @@ export function WorkoutSession({ sessionId }: { sessionId: number }) {
   const [plateOpen, setPlateOpen] = useState(false);
   const [coachOpen, setCoachOpen] = useState(false);
   const [prDetail, setPrDetail] = useState<string | null>(null);
-  const [cardioOpen, setCardioOpen] = useState(false);
   const [addExerciseOpen, setAddExerciseOpen] = useState(false);
+  const [exerciseListOpen, setExerciseListOpen] = useState(false);
+  const [showEndConfirm, setShowEndConfirm] = useState(false);
   const [removeTarget, setRemoveTarget] = useState<RemoveExerciseTarget | null>(
     null
   );
@@ -123,9 +128,12 @@ export function WorkoutSession({ sessionId }: { sessionId: number }) {
     null
   );
 
-  const load = useCallback(async () => {
+  const load = useCallback(async (): Promise<SessionData | null> => {
     const res = await fetch(`/api/sessions/${sessionId}`);
-    if (res.ok) setSession(await res.json());
+    if (!res.ok) return null;
+    const data = (await res.json()) as SessionData;
+    setSession(data);
+    return data;
   }, [sessionId]);
 
   useEffect(() => {
@@ -156,11 +164,29 @@ export function WorkoutSession({ sessionId }: { sessionId: number }) {
     return () => clearInterval(t);
   }, [restSeconds]);
 
+  const isPreview = session?.isPreview ?? previewFromUrl;
+
   const current = session?.exercises[exerciseIndex];
-  const progress =
-    session && session.exercises.length > 0
-      ? ((exerciseIndex + 1) / session.exercises.length) * 100
-      : 0;
+  const prevExercise =
+    session && exerciseIndex > 0
+      ? session.exercises[exerciseIndex - 1]
+      : null;
+  const nextExercise =
+    session && exerciseIndex < session.exercises.length - 1
+      ? session.exercises[exerciseIndex + 1]
+      : null;
+
+  const goPrev = () => {
+    setPrDetail(null);
+    setExerciseIndex((i) => Math.max(0, i - 1));
+  };
+
+  const goNext = () => {
+    setPrDetail(null);
+    setExerciseIndex((i) =>
+      session ? Math.min(session.exercises.length - 1, i + 1) : i
+    );
+  };
 
   const firstIncompleteId = useMemo(() => {
     if (!current) return null;
@@ -185,34 +211,34 @@ export function WorkoutSession({ sessionId }: { sessionId: number }) {
       if (data.prHit.isVolumePr) parts.push("volume");
       setPrDetail(parts.join(" & "));
     }
-    await load();
+    const completedExerciseId = current?.id;
+    const fresh = await load();
 
-    if (patch.isCompleted && current && session) {
-      const groupId = current.supersetGroupId;
-      if (groupId != null) {
-        const partners = session.exercises.filter(
-          (e) => e.supersetGroupId === groupId && e.id !== current.id
-        );
-        const partnerNeedsWork = partners.some((p) =>
-          p.sets.some((s) => !s.isCompleted)
-        );
-        if (partnerNeedsWork) {
-          const nextPartner = partners.find((p) =>
-            p.sets.some((s) => !s.isCompleted)
-          );
-          if (nextPartner) {
-            const idx = session.exercises.findIndex((e) => e.id === nextPartner.id);
-            if (idx >= 0) setExerciseIndex(idx);
-            return;
-          }
-        }
+    if (!patch.isCompleted || !fresh || completedExerciseId == null) return;
+
+    const cur = fresh.exercises.find((e) => e.id === completedExerciseId);
+    if (!cur) return;
+
+    const groupId = cur.supersetGroupId;
+    if (groupId != null) {
+      const myCount = countCompletedWorkingSets(cur);
+      const partners = fresh.exercises.filter(
+        (e) => e.supersetGroupId === groupId && e.id !== cur.id
+      );
+      const partnerBehind = partners.find(
+        (p) => countCompletedWorkingSets(p) < myCount
+      );
+      if (partnerBehind) {
+        const idx = fresh.exercises.findIndex((e) => e.id === partnerBehind.id);
+        if (idx >= 0) setExerciseIndex(idx);
+        return;
       }
-
-      const rest = restByExerciseId[current.id] ?? REST_DEFAULT;
-      setRestTotal(rest);
-      setRestSeconds(rest);
-      setRestMinimized(false);
     }
+
+    const rest = restByExerciseId[cur.id] ?? REST_DEFAULT;
+    setRestTotal(rest);
+    setRestSeconds(rest);
+    setRestMinimized(false);
   };
 
   const deleteSet = async (setId: number) => {
@@ -244,12 +270,13 @@ export function WorkoutSession({ sessionId }: { sessionId: number }) {
     else if (exerciseIndex === target) setExerciseIndex(index);
   };
 
-  const openSupersetSheet = () => {
-    if (!current) return;
+  const openSupersetSheet = (index = exerciseIndex) => {
+    const ex = session?.exercises[index];
+    if (!ex) return;
     setSupersetTarget({
-      sessionExerciseId: current.id,
-      exerciseName: current.exercise.name,
-      supersetGroupId: current.supersetGroupId,
+      sessionExerciseId: ex.id,
+      exerciseName: ex.exercise.name,
+      supersetGroupId: ex.supersetGroupId,
     });
   };
 
@@ -417,339 +444,260 @@ export function WorkoutSession({ sessionId }: { sessionId: number }) {
         onDismiss={() => setPrDetail(null)}
       />
 
+      {isPreview && (
+        <div className="mb-3 rounded-2xl border border-sky-500/30 bg-sky-950/40 py-2.5 text-center text-sm font-semibold text-sky-200">
+          👀 Preview — plan sets, weights &amp; exercises for your next workout
+        </div>
+      )}
+
       {session.isDeload && (
         <div className="mb-3 rounded-2xl border border-amber-500/30 bg-amber-500/10 py-2.5 text-center text-sm font-bold text-amber-100">
           😴 Deload Week — Recovery is progress
         </div>
       )}
 
-      <div className="mb-2">
-        <div className="mb-3 flex items-center justify-between">
-          <Button variant="ghost" size="sm" onClick={() => router.push("/today")}>
-            <ChevronLeft className="h-4 w-4" /> Exit
-          </Button>
-          <SectionLabel>
-            Exercise {exerciseIndex + 1} of {session.exercises.length}
-          </SectionLabel>
-          <Button variant="ghost" size="icon" onClick={() => setCoachOpen(true)}>
-            <MessageCircle className="h-5 w-5" />
-          </Button>
-        </div>
-        <div className="h-1.5 overflow-hidden rounded-full bg-zinc-800">
-          <motion.div
-            className="h-full rounded-full bg-gradient-to-r from-emerald-500 to-emerald-400"
-            initial={false}
-            animate={{ width: `${progress}%` }}
-            transition={{ duration: 0.3 }}
-          />
-        </div>
-      </div>
-
-      <div className="mt-3 space-y-2">
-        <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500">
-          Session exercises
-        </p>
-        <motion.div layout className="flex gap-2 overflow-x-auto pb-1">
-          <AnimatePresence mode="popLayout">
-            {session.exercises.map((ex, i) => {
-              const status = getExerciseProgress(ex.sets);
-              const inSuperset = ex.supersetGroupId != null;
-              return (
-              <motion.div
-                key={ex.id}
-                layout
-                initial={{ opacity: 0, x: -12 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -24, scale: 0.92 }}
-                transition={{ duration: 0.25 }}
-                className="flex shrink-0 items-stretch gap-0.5"
-              >
-                <button
-                  type="button"
-                  onClick={() => {
-                    setPrDetail(null);
-                    setExerciseIndex(i);
-                  }}
-                  className={cn(
-                    "rounded-xl border px-3 py-2 text-left text-xs font-semibold transition-colors",
-                    i === exerciseIndex
-                      ? "border-emerald-500/60 bg-emerald-950/50 text-emerald-200"
-                      : "border-zinc-800 bg-zinc-900/60 text-zinc-400 hover:border-zinc-600",
-                    status === "done" && i !== exerciseIndex && "border-emerald-800/40",
-                    status === "partial" && i !== exerciseIndex && "border-amber-700/40"
-                  )}
-                >
-                  <span className="flex max-w-[120px] items-center gap-1 truncate">
-                    {progressLabel(status) && (
-                      <span
-                        className={cn(
-                          "text-[10px]",
-                          status === "done" ? "text-emerald-400" : "text-amber-400"
-                        )}
-                      >
-                        {progressLabel(status)}
-                      </span>
-                    )}
-                    <span className="truncate">{ex.exercise.name}</span>
-                  </span>
-                  {inSuperset && (
-                    <span className="mt-0.5 block text-[9px] font-bold uppercase text-violet-400">
-                      SS
-                    </span>
-                  )}
-                  {ex.isUserAdded && (
-                    <span className="mt-0.5 block text-[9px] font-medium text-zinc-500">
-                      + you
-                    </span>
-                  )}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => startRemoveExercise(ex)}
-                  className="flex w-8 shrink-0 items-center justify-center rounded-xl border border-zinc-800 bg-zinc-900/60 text-zinc-500 hover:border-red-900/50 hover:bg-red-950/30 hover:text-red-400"
-                  aria-label={`Remove ${ex.exercise.name}`}
-                >
-                  <Trash2 className="h-3.5 w-3.5" />
-                </button>
-              </motion.div>
-            );
-            })}
-          </AnimatePresence>
-        </motion.div>
-        <Button
-          variant="outline"
-          className="h-12 w-full border-dashed border-emerald-600/50 bg-emerald-950/20 text-base font-bold text-emerald-300 hover:bg-emerald-950/40"
-          onClick={() => setAddExerciseOpen(true)}
-        >
-          <Plus className="h-5 w-5" /> Add Exercise
+      <div className="mb-4 flex items-center justify-between gap-2">
+        <Button variant="ghost" size="sm" onClick={() => router.push("/today")}>
+          <ChevronLeft className="h-4 w-4" /> Exit
         </Button>
-      </div>
-
-      <p className="mt-4 text-center text-xs font-medium text-emerald-400/90">
-        Let&apos;s get to work 🔥
-      </p>
-      <div className="mt-1 flex items-center justify-center gap-2">
-        <h1 className="text-center text-3xl font-extrabold leading-tight tracking-tight text-zinc-50">
-          {current.exercise.name}
-        </h1>
-        {current.supersetGroupId != null && (
-          <span className="rounded-full bg-violet-500/20 px-2 py-0.5 text-[10px] font-bold uppercase text-violet-300">
-            Superset
-          </span>
-        )}
-      </div>
-
-      <div className="mt-2 flex flex-wrap items-center justify-center gap-2">
         <Button
-          variant="outline"
+          variant="ghost"
           size="sm"
-          className="h-9 border-zinc-700 text-xs"
-          onClick={() => setShowExerciseInfo((o) => !o)}
+          className="text-zinc-400 hover:text-zinc-200"
+          onClick={() => setShowEndConfirm(true)}
         >
-          <Info className="h-3.5 w-3.5" />
-          {showExerciseInfo ? "Hide info" : "Exercise info"}
-        </Button>
-        {session.exercises.length > 1 && (
-          <Button
-            variant="outline"
-            size="sm"
-            className="h-9 border-violet-700/50 text-xs text-violet-300"
-            onClick={openSupersetSheet}
-          >
-            <Link2 className="h-3.5 w-3.5" />
-            {current.supersetGroupId != null ? "Manage superset" : "Superset"}
-          </Button>
-        )}
-        <Button
-          variant="outline"
-          size="sm"
-          className="h-9 border-zinc-700 text-xs"
-          disabled={exerciseIndex === 0}
-          onClick={() => void moveExercise(exerciseIndex, -1)}
-        >
-          <ArrowUp className="h-3.5 w-3.5" />
-        </Button>
-        <Button
-          variant="outline"
-          size="sm"
-          className="h-9 border-zinc-700 text-xs"
-          disabled={exerciseIndex >= session.exercises.length - 1}
-          onClick={() => void moveExercise(exerciseIndex, 1)}
-        >
-          <ArrowDown className="h-3.5 w-3.5" />
+          {isPreview ? "Save & exit" : "End Workout"}
         </Button>
       </div>
 
-      <AnimatePresence>
-        {showExerciseInfo && (
-          <motion.div
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: "auto", opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            className="overflow-hidden"
-          >
-            <Card className="mt-3 space-y-2 border-zinc-700/80 p-4 text-sm text-zinc-300">
-              {current.muscleGroup && (
-                <p>
-                  <span className="font-semibold text-zinc-400">Muscle: </span>
-                  {current.muscleGroup.name}
-                </p>
-              )}
-              {current.exercise.equipment && (
-                <p>
-                  <span className="font-semibold text-zinc-400">Equipment: </span>
-                  {current.exercise.equipment}
-                </p>
-              )}
-              {current.exercise.instructions ? (
-                <p className="leading-relaxed">{current.exercise.instructions}</p>
-              ) : (
-                <p className="text-zinc-500">No written cues for this movement yet.</p>
-              )}
-              <a
-                href={youtubeSearchUrl(current.exercise.youtubeQuery)}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-1 font-semibold text-red-400 hover:text-red-300"
-              >
-                Form video <ExternalLink className="h-3.5 w-3.5" />
-              </a>
-            </Card>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {current.isUserAdded && (
-        <p className="mt-1 text-center">
-          <span className="rounded-full bg-zinc-800 px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-zinc-400">
-            Added by you
-          </span>
-        </p>
-      )}
-
-      {current.suggestion && (
-        <p className="mt-2 text-center text-xs font-semibold text-emerald-400">
-          ⬆️ Suggested:{" "}
-          {formatWeightShort(current.suggestion.suggestedWeightKg, preferredUnit)}{" "}
-          <span className="text-zinc-500">
-            (was {formatWeightShort(current.suggestion.lastWeightKg, preferredUnit)})
-          </span>
-        </p>
-      )}
-
-      {prDetail && (
-        <p className="animate-pr-pulse mt-2 text-center text-sm font-bold text-amber-400">
-          🏆 PR — {prDetail}
-        </p>
-      )}
-
-      {current.lastPerformance && (
-        <p className="mt-2 text-center text-xs text-zinc-500">
-          Last:{" "}
-          {current.lastPerformance.sets
-            .map(
-              (s) =>
-                `${s.reps ?? "?"}×${displayWeightValue(s.weightKg, preferredUnit) ?? "BW"}`
-            )
-            .join(", ")}
-        </p>
-      )}
-
-      {current.lastPerformance?.typical &&
-        (current.lastPerformance.typical.reps != null ||
-          current.lastPerformance.typical.weightKg != null) && (
-          <p className="mt-1 text-center text-xs text-emerald-500/90">
-            Usual: {current.lastPerformance.typical.reps ?? "?"} reps
-            {current.lastPerformance.typical.weightKg != null &&
-              !current.exercise.isBodyweight &&
-              ` @ ${formatWeightShort(current.lastPerformance.typical.weightKg, preferredUnit)}`}
+      <div className="mb-3 text-center" aria-hidden>
+        {prevExercise && (
+          <p className="truncate text-[11px] text-zinc-600">
+            {prevExercise.exercise.name}
           </p>
         )}
-
-      <motion.div layout className="mx-auto mt-4 flex w-full max-w-sm gap-2">
-        <Button
-          variant="outline"
-          size="sm"
-          className="flex-1 border-emerald-600/50 bg-emerald-950/20 text-emerald-300 hover:bg-emerald-950/40"
-          onClick={addWorkingSet}
-        >
-          <Plus className="h-4 w-4" /> Add Set
-        </Button>
-        <Button
-          variant="outline"
-          size="sm"
-          className="flex-1 border-zinc-700"
-          onClick={addWarmup}
-        >
-          <Plus className="h-4 w-4" /> Warm-up
-        </Button>
-      </motion.div>
-
-      <div className="mt-4 flex-1 space-y-2">
-        {[...warmupSets, ...workingSets].map((set) => (
-          <SetCard
-            key={set.id}
-            set={set}
-            isActive={set.id === firstIncompleteId}
-            isBodyweight={current.exercise.isBodyweight}
-            preferredUnit={preferredUnit}
-            typical={current.lastPerformance?.typical ?? null}
-            onUpdate={updateSet}
-            onDelete={() => void deleteSet(set.id)}
-            onPlate={() => setPlateOpen(true)}
-          />
-        ))}
+        <p className="text-xs font-medium tracking-wide text-zinc-500">
+          Exercise {exerciseIndex + 1} of {session.exercises.length}
+        </p>
       </div>
 
       <button
         type="button"
-        onClick={() => setCardioOpen((o) => !o)}
-        className="mt-4 flex w-full items-center justify-between rounded-2xl border border-zinc-800 bg-zinc-900/60 px-4 py-3 text-left text-sm font-semibold text-zinc-300"
+        onClick={() => setExerciseListOpen(true)}
+        className="mx-auto mb-4 block rounded-full border border-zinc-800/80 bg-zinc-900/50 px-4 py-2 text-xs font-semibold text-zinc-400 transition hover:border-zinc-600 hover:text-zinc-300"
       >
-        <span>🏃 Add Cardio</span>
-        {cardioOpen ? (
-          <ChevronUp className="h-4 w-4" />
-        ) : (
-          <ChevronDown className="h-4 w-4" />
-        )}
+        View all · {session.exercises.length} exercises
       </button>
-      <AnimatePresence>
-        {cardioOpen && (
-          <motion.div
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: "auto", opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            className="overflow-hidden"
-          >
-            <Card className="mt-2 border-dashed text-center text-sm text-zinc-500">
-              Log duration, distance &amp; intensity after your lifts.
-            </Card>
+
+      <AnimatePresence mode="wait" initial={false}>
+        <motion.div
+          key={exerciseIndex}
+          drag="x"
+          dragConstraints={{ left: 0, right: 0 }}
+          dragElastic={0.18}
+          onDragEnd={(_, info) => {
+            if (info.offset.x < -72 && exerciseIndex < session.exercises.length - 1) {
+              goNext();
+            } else if (info.offset.x > 72 && exerciseIndex > 0) {
+              goPrev();
+            }
+          }}
+          initial={{ opacity: 0, x: 28 }}
+          animate={{ opacity: 1, x: 0 }}
+          exit={{ opacity: 0, x: -28 }}
+          transition={{ duration: 0.22, ease: "easeOut" }}
+          className="flex flex-1 flex-col touch-pan-y"
+        >
+          <div className="flex flex-wrap items-center justify-center gap-2">
+            <h1 className="text-center text-3xl font-extrabold leading-tight tracking-tight text-zinc-50">
+              {current.exercise.name}
+            </h1>
+            {current.supersetGroupId != null && (
+              <span className="rounded-full bg-violet-500/20 px-2 py-0.5 text-[10px] font-bold uppercase text-violet-300">
+                Superset
+              </span>
+            )}
+          </div>
+
+          <div className="mt-2 flex flex-wrap items-center justify-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-8 border-zinc-700/80 text-xs text-zinc-400"
+              onClick={() => setShowExerciseInfo((o) => !o)}
+            >
+              <Info className="h-3.5 w-3.5" />
+              {showExerciseInfo ? "Hide info" : "Info"}
+            </Button>
+            {session.exercises.length > 1 && (
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-8 border-violet-700/50 text-xs text-violet-300"
+                onClick={() => openSupersetSheet()}
+              >
+                <Link2 className="h-3.5 w-3.5" />
+                {current.supersetGroupId != null ? "Superset" : "Superset"}
+              </Button>
+            )}
+          </div>
+
+          <AnimatePresence>
+            {showExerciseInfo && (
+              <motion.div
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: "auto", opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                className="overflow-hidden"
+              >
+                <Card className="mt-3 space-y-2 border-zinc-700/80 p-4 text-sm text-zinc-300">
+                  {current.muscleGroup && (
+                    <p>
+                      <span className="font-semibold text-zinc-400">Muscle: </span>
+                      {current.muscleGroup.name}
+                    </p>
+                  )}
+                  {current.exercise.equipment && (
+                    <p>
+                      <span className="font-semibold text-zinc-400">Equipment: </span>
+                      {current.exercise.equipment}
+                    </p>
+                  )}
+                  {current.exercise.instructions ? (
+                    <p className="leading-relaxed">{current.exercise.instructions}</p>
+                  ) : (
+                    <p className="text-zinc-500">No written cues for this movement yet.</p>
+                  )}
+                  <a
+                    href={youtubeSearchUrl(current.exercise.youtubeQuery)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1 font-semibold text-red-400 hover:text-red-300"
+                  >
+                    Form video <ExternalLink className="h-3.5 w-3.5" />
+                  </a>
+                </Card>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {current.isUserAdded && (
+            <p className="mt-2 text-center">
+              <span className="rounded-full bg-zinc-800 px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-zinc-500">
+                Added by you
+              </span>
+            </p>
+          )}
+
+          {current.suggestion && (
+            <p className="mt-3 text-center text-sm font-semibold text-emerald-400">
+              ⬆️ Suggested:{" "}
+              {formatWeightShort(current.suggestion.suggestedWeightKg, preferredUnit)}{" "}
+              <span className="text-zinc-500">
+                (was {formatWeightShort(current.suggestion.lastWeightKg, preferredUnit)})
+              </span>
+            </p>
+          )}
+
+          {prDetail && (
+            <p className="animate-pr-pulse mt-2 text-center text-sm font-bold text-amber-400">
+              🏆 PR — {prDetail}
+            </p>
+          )}
+
+          {current.lastPerformance && (
+            <p className="mt-2 text-center text-xs text-zinc-500">
+              Last:{" "}
+              {current.lastPerformance.sets
+                .map(
+                  (s) =>
+                    `${s.reps ?? "?"}×${displayWeightValue(s.weightKg, preferredUnit) ?? "BW"}`
+                )
+                .join(", ")}
+            </p>
+          )}
+
+          {current.lastPerformance?.typical &&
+            (current.lastPerformance.typical.reps != null ||
+              current.lastPerformance.typical.weightKg != null) && (
+              <p className="mt-1 text-center text-xs text-emerald-500/80">
+                Usual: {current.lastPerformance.typical.reps ?? "?"} reps
+                {current.lastPerformance.typical.weightKg != null &&
+                  !current.exercise.isBodyweight &&
+                  ` @ ${formatWeightShort(current.lastPerformance.typical.weightKg, preferredUnit)}`}
+              </p>
+            )}
+
+          <motion.div layout className="mx-auto mt-4 flex w-full max-w-sm gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              className="flex-1 border-emerald-600/50 bg-emerald-950/20 text-emerald-300 hover:bg-emerald-950/40"
+              onClick={addWorkingSet}
+            >
+              <Plus className="h-4 w-4" /> Add Set
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              className="flex-1 border-zinc-700"
+              onClick={addWarmup}
+            >
+              <Plus className="h-4 w-4" /> Warm-up
+            </Button>
           </motion.div>
-        )}
+
+          <div className="mt-4 space-y-2">
+            {[...warmupSets, ...workingSets].map((set) => (
+              <SetCard
+                key={set.id}
+                set={set}
+                isActive={set.id === firstIncompleteId}
+                isBodyweight={current.exercise.isBodyweight}
+                preferredUnit={preferredUnit}
+                typical={current.lastPerformance?.typical ?? null}
+                onUpdate={updateSet}
+                onDelete={() => void deleteSet(set.id)}
+                onPlate={() => setPlateOpen(true)}
+              />
+            ))}
+          </div>
+
+          {nextExercise && (
+            <div
+              className="pointer-events-none mt-8 select-none opacity-30"
+              aria-hidden
+            >
+              <p className="text-[10px] font-bold uppercase tracking-wider text-zinc-500">
+                Up next
+              </p>
+              <p className="mt-1 truncate text-lg font-bold text-zinc-400">
+                {nextExercise.exercise.name}
+              </p>
+            </div>
+          )}
+        </motion.div>
       </AnimatePresence>
 
-      <div className="mt-4 flex gap-2">
+      <div className="mt-6 flex gap-2 pb-24">
         <Button
           variant="secondary"
           className="flex-1"
           disabled={exerciseIndex === 0}
-          onClick={() => setExerciseIndex((i) => i - 1)}
+          onClick={goPrev}
         >
           <ChevronLeft /> Prev
         </Button>
         {exerciseIndex < session.exercises.length - 1 ? (
-          <Button
-            className="flex-1"
-            onClick={() => {
-              setPrDetail(null);
-              setExerciseIndex((i) => i + 1);
-            }}
-          >
+          <Button className="flex-1" onClick={goNext}>
             Next <ChevronRight />
           </Button>
         ) : (
-          <Button className="flex-1" onClick={() => setShowComplete(true)}>
-            Finish 💪
+          <Button
+            className="flex-1"
+            onClick={() => (isPreview ? setShowEndConfirm(true) : setShowComplete(true))}
+          >
+            {isPreview ? "Save Preview ✓" : "Finish 💪"}
           </Button>
         )}
       </div>
@@ -775,6 +723,43 @@ export function WorkoutSession({ sessionId }: { sessionId: number }) {
 
       {showWearableNotice && (
         <WearableNotice onDismiss={() => setShowWearableNotice(false)} />
+      )}
+
+      {showEndConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 px-4 backdrop-blur-sm">
+          <Card className="w-full max-w-sm border-zinc-700 p-6">
+            <h2 className="text-xl font-extrabold text-zinc-50">
+              {isPreview ? "Save preview?" : "End workout?"}
+            </h2>
+            <p className="mt-2 text-sm text-zinc-400">
+              {isPreview
+                ? "Your planned sets and exercises will be saved. This won\u2019t count as a completed workout."
+                : "You\u2019ll log how it felt and save this session. You can still come back from Today if you exit early."}
+            </p>
+            <div className="mt-6 flex gap-2">
+              <Button
+                variant="secondary"
+                className="flex-1"
+                onClick={() => setShowEndConfirm(false)}
+              >
+                Keep going
+              </Button>
+              <Button
+                className="flex-1"
+                onClick={() => {
+                  setShowEndConfirm(false);
+                  if (isPreview) {
+                    void finishSession();
+                  } else {
+                    setShowComplete(true);
+                  }
+                }}
+              >
+                {isPreview ? "Save Preview" : "End Workout"}
+              </Button>
+            </div>
+          </Card>
+        </div>
       )}
 
       {showComplete && (
@@ -817,6 +802,21 @@ export function WorkoutSession({ sessionId }: { sessionId: number }) {
           </Card>
         </div>
       )}
+
+      <ExerciseListSheet
+        open={exerciseListOpen}
+        onClose={() => setExerciseListOpen(false)}
+        exercises={session.exercises}
+        currentIndex={exerciseIndex}
+        onSelect={(i) => {
+          setPrDetail(null);
+          setExerciseIndex(i);
+        }}
+        onRemove={(i) => startRemoveExercise(session.exercises[i])}
+        onMove={(i, direction) => void moveExercise(i, direction)}
+        onAddExercise={() => setAddExerciseOpen(true)}
+        onManageSuperset={(i) => openSupersetSheet(i)}
+      />
 
       <PlateCalculator open={plateOpen} onClose={() => setPlateOpen(false)} />
       <AddExerciseSheet
@@ -897,10 +897,16 @@ export function WorkoutSession({ sessionId }: { sessionId: number }) {
       <button
         type="button"
         onClick={() => setCoachOpen(true)}
-        className="fixed bottom-6 right-4 z-30 flex h-14 w-14 items-center justify-center rounded-full bg-emerald-600 text-2xl shadow-lg shadow-emerald-600/40 ring-2 ring-emerald-400/50"
-        aria-label="Ask your coach"
+        className="fixed bottom-6 right-4 z-30 flex flex-col items-center gap-1"
+        aria-label="Session Coach — live workout context"
       >
-        🤖
+        <span className="relative flex h-14 w-14 items-center justify-center rounded-full bg-violet-600 shadow-lg shadow-violet-600/35 ring-2 ring-violet-400/40">
+          <Dumbbell className="h-6 w-6 text-violet-50" />
+          <MessageCircle className="absolute -bottom-0.5 -right-0.5 h-5 w-5 rounded-full bg-zinc-950 text-violet-200 ring-2 ring-violet-600" />
+        </span>
+        <span className="rounded-full bg-zinc-950/90 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wide text-violet-200 ring-1 ring-violet-500/30">
+          Session Coach
+        </span>
       </button>
     </div>
   );

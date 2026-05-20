@@ -33,11 +33,18 @@ function serializeSession(session: NonNullable<Awaited<ReturnType<typeof startSe
 
 export async function GET() {
   const active = await getActiveSessionOrNull();
-  return NextResponse.json({ activeSessionId: active?.id ?? null });
+  return NextResponse.json({
+    activeSessionId: active?.id ?? null,
+    activeIsPreview: active?.isPreview ?? false,
+  });
 }
 
 export async function POST(req: Request) {
   const body = await req.json().catch(() => ({}));
-  const session = await startSession(body.planId);
+  const session = await startSession({
+    planId: body.planId,
+    preview: body.preview === true,
+    extraToday: body.extraToday === true,
+  });
   return NextResponse.json(serializeSession(session!));
 }

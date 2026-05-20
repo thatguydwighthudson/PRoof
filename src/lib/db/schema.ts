@@ -173,6 +173,7 @@ export const workoutSessions = pgTable(
     sessionNotes: text("session_notes"),
     overallFeel: smallint("overall_feel"),
     isDeload: boolean("is_deload").notNull().default(false),
+    isPreview: boolean("is_preview").notNull().default(false),
     clonedFromId: integer("cloned_from_id"),
     createdAt: timestamp("created_at", { withTimezone: true })
       .notNull()

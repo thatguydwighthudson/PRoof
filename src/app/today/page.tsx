@@ -41,6 +41,7 @@ export default async function TodayPage() {
         initialToday={today}
         nextWorkout={nextWorkout}
         activeSessionId={active?.id ?? null}
+        activeIsPreview={active?.isPreview ?? false}
         exercisePreviews={exercisePreviews}
       />
     </div>

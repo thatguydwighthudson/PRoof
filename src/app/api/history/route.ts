@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
-import { desc, eq } from "drizzle-orm";
+import { and, desc, eq, isNotNull } from "drizzle-orm";
+import { completionDateKey } from "@/lib/session-log-date";
 import { db } from "@/lib/db";
 import {
   workoutSessions,
@@ -18,8 +19,14 @@ export async function GET() {
     })
     .from(workoutSessions)
     .leftJoin(workoutPlans, eq(workoutSessions.planId, workoutPlans.id))
-    .where(eq(workoutSessions.userId, CURRENT_USER_ID))
-    .orderBy(desc(workoutSessions.sessionDate))
+    .where(
+      and(
+        eq(workoutSessions.userId, CURRENT_USER_ID),
+        isNotNull(workoutSessions.endedAt),
+        eq(workoutSessions.isPreview, false)
+      )
+    )
+    .orderBy(desc(workoutSessions.endedAt))
     .limit(100);
 
   const withCounts = await Promise.all(
@@ -34,6 +41,7 @@ export async function GET() {
         .where(eq(sessionCardio.sessionId, session.id));
       return {
         ...session,
+        completedDate: completionDateKey(session.endedAt!),
         planName: plan?.name ?? "Workout",
         exerciseCount: exCount.length,
         cardioCount: cardio.length,

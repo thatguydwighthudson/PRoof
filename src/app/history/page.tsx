@@ -3,7 +3,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
-import { format, startOfWeek, parseISO } from "date-fns";
+import { format, startOfWeek } from "date-fns";
+import { parseLogDate } from "@/lib/session-log-date";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { SectionLabel } from "@/components/ui/section-label";
@@ -12,7 +13,8 @@ import { cn } from "@/lib/utils";
 
 type SessionRow = {
   id: number;
-  sessionDate: string;
+  endedAt: string;
+  completedDate: string;
   planName: string;
   durationMins: number | null;
   isDeload: boolean;
@@ -38,9 +40,7 @@ export default function HistoryPage() {
   const weekGroups = useMemo((): WeekGroup[] => {
     const map = new Map<string, SessionRow[]>();
     for (const s of sessions) {
-      const d = parseISO(
-        s.sessionDate.includes("T") ? s.sessionDate : `${s.sessionDate}T12:00:00`
-      );
+      const d = parseLogDate(s.completedDate);
       const weekStart = startOfWeek(d, { weekStartsOn: 1 });
       const key = format(weekStart, "yyyy-MM-dd");
       if (!map.has(key)) map.set(key, []);
@@ -50,8 +50,11 @@ export default function HistoryPage() {
       .sort(([a], [b]) => b.localeCompare(a))
       .map(([key, list]) => ({
         key,
-        label: `Week of ${format(parseISO(`${key}T12:00:00`), "MMM d")}`,
-        sessions: list,
+        label: `Week of ${format(parseLogDate(key), "MMM d")}`,
+        sessions: list.sort(
+          (a, b) =>
+            new Date(b.endedAt).getTime() - new Date(a.endedAt).getTime()
+        ),
       }));
   }, [sessions]);
 
@@ -106,7 +109,7 @@ export default function HistoryPage() {
                           {theme.emoji} {s.planName}
                         </p>
                         <p className="mt-0.5 text-sm font-medium text-zinc-400">
-                          {s.sessionDate}
+                          {format(parseLogDate(s.completedDate), "EEEE, MMM d, yyyy")}
                         </p>
                       </div>
                       {s.isDeload && (

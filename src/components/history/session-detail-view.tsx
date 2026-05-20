@@ -217,7 +217,7 @@ export function SessionDetailView({ sessionId }: { sessionId: number }) {
               {theme.emoji} {planLabel}
             </p>
             <p className="mt-0.5 text-sm font-medium text-zinc-400">
-              {formatSessionDate(session.sessionDate)}
+              {formatSessionDate(session.endedAt ?? session.sessionDate)}
             </p>
           </div>
           <div className="flex flex-col items-end gap-1">

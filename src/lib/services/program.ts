@@ -176,7 +176,26 @@ export async function hasCompletedTodayWorkout(planId: number | null) {
         eq(workoutSessions.userId, CURRENT_USER_ID),
         eq(workoutSessions.planId, planId),
         isNotNull(workoutSessions.endedAt),
-        eq(workoutSessions.sessionDate, today)
+        eq(workoutSessions.sessionDate, today),
+        eq(workoutSessions.isPreview, false)
+      )
+    )
+    .limit(1);
+  return !!row;
+}
+
+/** Any finished (non-preview) session today. */
+export async function hasCompletedWorkoutToday() {
+  const today = todayDateString();
+  const [row] = await db
+    .select({ id: workoutSessions.id })
+    .from(workoutSessions)
+    .where(
+      and(
+        eq(workoutSessions.userId, CURRENT_USER_ID),
+        isNotNull(workoutSessions.endedAt),
+        eq(workoutSessions.sessionDate, today),
+        eq(workoutSessions.isPreview, false)
       )
     )
     .limit(1);
@@ -200,30 +219,14 @@ export async function getNextWorkoutPreview() {
 
   if (allDays.length === 0) return null;
 
-  const maxDay = Math.max(...allDays.map((d) => d.programDay.dayNumber));
-  let dayNum = userProgram.nextDayNumber;
-  let week = userProgram.currentWeek;
-  const today = await getTodayPlan();
-  const completedToday =
-    today?.plan != null &&
-    (await hasCompletedTodayWorkout(today.plan.id));
-
-  if (completedToday) {
-    dayNum += 1;
-    if (dayNum > maxDay) {
-      dayNum = 1;
-      week += 1;
-    }
-  }
+  const completedToday = await hasCompletedWorkoutToday();
+  const dayNum = userProgram.nextDayNumber;
+  const week = userProgram.currentWeek;
 
   const target = allDays.find((d) => d.programDay.dayNumber === dayNum);
   if (!target) return null;
 
   const deload = isDeloadWeek(week, program.deloadWeekInterval);
-  const nextDate = new Date();
-  if (completedToday) {
-    nextDate.setDate(nextDate.getDate() + 1);
-  }
 
   return {
     completedToday,
@@ -232,11 +235,6 @@ export async function getNextWorkoutPreview() {
     programDay: target.programDay,
     plan: target.plan,
     deload,
-    nextDate: nextDate.toLocaleDateString(undefined, {
-      weekday: "short",
-      month: "short",
-      day: "numeric",
-    }),
   };
 }
 

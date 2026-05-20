@@ -1,4 +1,4 @@
-import { and, asc, desc, eq, isNull, ne, or } from "drizzle-orm";
+import { and, asc, desc, eq, isNotNull, isNull, ne, or } from "drizzle-orm";
 import { db } from "@/lib/db";
 import {
   workoutSessions,
@@ -72,6 +72,118 @@ export async function getActiveSessionOrNull() {
   return session ?? null;
 }
 
+function todayDateString() {
+  return new Date().toISOString().slice(0, 10);
+}
+
+async function getLastCompletedPlanIdToday() {
+  const today = todayDateString();
+  const [row] = await db
+    .select({ planId: workoutSessions.planId })
+    .from(workoutSessions)
+    .where(
+      and(
+        eq(workoutSessions.userId, CURRENT_USER_ID),
+        isNotNull(workoutSessions.endedAt),
+        eq(workoutSessions.sessionDate, today),
+        eq(workoutSessions.isPreview, false)
+      )
+    )
+    .orderBy(desc(workoutSessions.endedAt))
+    .limit(1);
+
+  return row?.planId ?? null;
+}
+
+async function abandonPreviewSession(sessionId: number) {
+  await db
+    .delete(workoutSessions)
+    .where(
+      and(
+        eq(workoutSessions.id, sessionId),
+        eq(workoutSessions.userId, CURRENT_USER_ID),
+        eq(workoutSessions.isPreview, true)
+      )
+    );
+}
+
+export type StartSessionOptions = {
+  planId?: number;
+  preview?: boolean;
+  extraToday?: boolean;
+};
+
+async function createSessionForPlan(
+  pid: number,
+  deload: boolean,
+  isPreview: boolean
+) {
+  const [session] = await db
+    .insert(workoutSessions)
+    .values({
+      userId: CURRENT_USER_ID,
+      planId: pid,
+      startedAt: new Date(),
+      isDeload: deload,
+      isPreview,
+    })
+    .returning();
+
+  const today = await getTodayPlan();
+  let exercisesToAdd = today?.exercises ?? [];
+
+  if (!today?.plan || pid !== today.plan.id) {
+    const raw = await db
+      .select({
+        planExercise: workoutPlanExercises,
+        exercise: exercises,
+      })
+      .from(workoutPlanExercises)
+      .innerJoin(exercises, eq(workoutPlanExercises.exerciseId, exercises.id))
+      .where(eq(workoutPlanExercises.planId, pid))
+      .orderBy(workoutPlanExercises.sortOrder);
+    exercisesToAdd = raw.map((r) => ({
+      planExercise: r.planExercise,
+      exercise: r.exercise,
+      muscleGroup: null,
+      isVariant: false,
+      baseExerciseId: null,
+    }));
+  }
+
+  for (const row of exercisesToAdd) {
+    const pe = row.planExercise;
+    const ex = row.exercise;
+
+    const last = await getLastSessionWeights(ex.id);
+    const suggestion = deload ? null : await getPendingSuggestion(ex.id);
+    const defaults = resolveSetDefaults(pe, { deload, last, suggestion });
+
+    const [se] = await db
+      .insert(sessionExercises)
+      .values({
+        sessionId: session.id,
+        exerciseId: ex.id,
+        sortOrder: pe.sortOrder,
+        supersetGroupId: pe.supersetGroupId,
+      })
+      .returning();
+
+    for (let i = 1; i <= defaults.setCount; i++) {
+      await db.insert(sessionSets).values({
+        sessionExerciseId: se.id,
+        setNumber: i,
+        reps: defaults.reps,
+        weightKg: defaults.weightKg != null ? String(defaults.weightKg) : null,
+        isWarmup: false,
+        isCompleted: false,
+      });
+    }
+  }
+
+  return getSessionDetail(session.id);
+}
+
 async function getLastSessionWeights(exerciseId: number) {
   const recentSessions = await db
     .select({ id: workoutSessions.id })
@@ -124,77 +236,49 @@ async function getLastSessionWeights(exerciseId: number) {
   return null;
 }
 
-export async function startSession(planId?: number) {
+export async function startSession(
+  options?: StartSessionOptions | number
+) {
+  const opts: StartSessionOptions =
+    typeof options === "number" ? { planId: options } : (options ?? {});
+
   const existing = await getActiveSessionOrNull();
+
+  if (opts.preview) {
+    if (existing?.isPreview) return getSessionDetail(existing.id);
+    if (existing && !existing.isPreview) {
+      return getSessionDetail(existing.id);
+    }
+
+    const today = await getTodayPlan();
+    if (!today?.plan) throw new Error("No workout plan for today");
+
+    return createSessionForPlan(today.plan.id, today.deload, true);
+  }
+
+  if (opts.extraToday) {
+    if (existing?.isPreview) {
+      await abandonPreviewSession(existing.id);
+    } else if (existing && !existing.isPreview) {
+      return getSessionDetail(existing.id);
+    }
+
+    const today = await getTodayPlan();
+    const pid =
+      opts.planId ?? (await getLastCompletedPlanIdToday()) ?? today?.plan?.id;
+    if (!pid) throw new Error("No workout plan for today");
+
+    const deload = today?.deload ?? false;
+    return createSessionForPlan(pid, deload, false);
+  }
+
   if (existing) return getSessionDetail(existing.id);
 
   const today = await getTodayPlan();
   if (!today?.plan) throw new Error("No workout plan for today");
 
-  const pid = planId ?? today.plan.id;
-  const deload = today.deload;
-
-  const [session] = await db
-    .insert(workoutSessions)
-    .values({
-      userId: CURRENT_USER_ID,
-      planId: pid,
-      startedAt: new Date(),
-      isDeload: deload,
-    })
-    .returning();
-
-  let exercisesToAdd = today.exercises;
-  if (planId && planId !== today.plan.id) {
-    const raw = await db
-      .select({
-        planExercise: workoutPlanExercises,
-        exercise: exercises,
-      })
-      .from(workoutPlanExercises)
-      .innerJoin(exercises, eq(workoutPlanExercises.exerciseId, exercises.id))
-      .where(eq(workoutPlanExercises.planId, pid))
-      .orderBy(workoutPlanExercises.sortOrder);
-    exercisesToAdd = raw.map((r) => ({
-      planExercise: r.planExercise,
-      exercise: r.exercise,
-      muscleGroup: null,
-      isVariant: false,
-      baseExerciseId: null,
-    }));
-  }
-
-  for (const row of exercisesToAdd) {
-    const pe = row.planExercise;
-    const ex = row.exercise;
-
-    const last = await getLastSessionWeights(ex.id);
-    const suggestion = deload ? null : await getPendingSuggestion(ex.id);
-    const defaults = resolveSetDefaults(pe, { deload, last, suggestion });
-
-    const [se] = await db
-      .insert(sessionExercises)
-      .values({
-        sessionId: session.id,
-        exerciseId: ex.id,
-        sortOrder: pe.sortOrder,
-        supersetGroupId: pe.supersetGroupId,
-      })
-      .returning();
-
-    for (let i = 1; i <= defaults.setCount; i++) {
-      await db.insert(sessionSets).values({
-        sessionExerciseId: se.id,
-        setNumber: i,
-        reps: defaults.reps,
-        weightKg: defaults.weightKg != null ? String(defaults.weightKg) : null,
-        isWarmup: false,
-        isCompleted: false,
-      });
-    }
-  }
-
-  return getSessionDetail(session.id);
+  const pid = opts.planId ?? today.plan.id;
+  return createSessionForPlan(pid, today.deload, false);
 }
 
 export async function cloneSession(sourceSessionId: number) {
@@ -407,10 +491,25 @@ export async function completeSession(
     ? Math.round((endedAt.getTime() - session.startedAt.getTime()) / 60000)
     : null;
 
+  if (session.isPreview) {
+    await db
+      .update(workoutSessions)
+      .set({
+        endedAt,
+        durationMins,
+        sessionNotes: data.sessionNotes ?? null,
+      })
+      .where(eq(workoutSessions.id, sessionId));
+    return getSessionDetail(sessionId);
+  }
+
+  const sessionDate = endedAt.toISOString().slice(0, 10);
+
   await db
     .update(workoutSessions)
     .set({
       endedAt,
+      sessionDate,
       durationMins,
       sessionNotes: data.sessionNotes,
       overallFeel: data.overallFeel,

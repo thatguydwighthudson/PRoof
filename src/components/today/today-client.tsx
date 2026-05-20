@@ -37,18 +37,19 @@ type NextWorkoutData = {
   programDay: { label: string | null; restDay: boolean };
   plan: { id: number; name: string; description: string | null } | null;
   deload: boolean;
-  nextDate: string;
 } | null;
 
 export function TodayClient({
   initialToday,
   nextWorkout,
   activeSessionId,
+  activeIsPreview,
   exercisePreviews,
 }: {
   initialToday: TodayData;
   nextWorkout: NextWorkoutData;
   activeSessionId: number | null;
+  activeIsPreview: boolean;
   exercisePreviews: (ResolvedSetDefaults & { exerciseId: number })[];
 }) {
   const router = useRouter();
@@ -68,20 +69,35 @@ export function TodayClient({
     });
   }, []);
 
-  const startWorkout = async () => {
+  const openSession = async (body: Record<string, boolean>) => {
     setLoading(true);
     try {
       if (activeSessionId) {
-        router.push(`/workout/${activeSessionId}`);
-        return;
+        if (body.preview && activeIsPreview) {
+          router.push(`/workout/${activeSessionId}?preview=1`);
+          return;
+        }
+        if ((body.extraToday || !body.preview) && !activeIsPreview) {
+          router.push(`/workout/${activeSessionId}`);
+          return;
+        }
       }
-      const res = await fetch("/api/sessions", { method: "POST" });
+      const res = await fetch("/api/sessions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
       const data = await res.json();
-      router.push(`/workout/${data.id}`);
+      const qs = body.preview ? "?preview=1" : "";
+      router.push(`/workout/${data.id}${qs}`);
     } finally {
       setLoading(false);
     }
   };
+
+  const startWorkout = () => openSession({});
+  const startPreview = () => openSession({ preview: true });
+  const startAnotherToday = () => openSession({ extraToday: true });
 
   if (!initialToday) {
     return (
@@ -116,7 +132,7 @@ export function TodayClient({
   }
 
   const theme = getPlanTheme(initialToday.plan.name);
-  const showNextWorkout =
+  const completedToday =
     nextWorkout?.completedToday &&
     nextWorkout.plan != null &&
     !nextWorkout.programDay.restDay;
@@ -124,34 +140,6 @@ export function TodayClient({
   return (
     <div className="space-y-4">
       <StreakCard />
-
-      {showNextWorkout && nextWorkout.plan && (
-        <Card className="border-l-4 border-l-sky-500/60 bg-sky-950/20 pl-5">
-          <SectionLabel>Next workout</SectionLabel>
-          <p className="mt-1 text-xs font-medium text-sky-300/90">
-            {nextWorkout.nextDate}
-          </p>
-          <div className="mt-3 flex items-start gap-2">
-            <span className="text-2xl">
-              {getPlanTheme(nextWorkout.plan.name).emoji}
-            </span>
-            <div className="min-w-0">
-              <h2 className="text-xl font-extrabold tracking-tight text-zinc-50">
-                {nextWorkout.plan.name}
-              </h2>
-              <p className="mt-0.5 text-xs text-zinc-500">
-                Week {nextWorkout.week} · Day {nextWorkout.dayNumber}
-                {nextWorkout.programDay.label
-                  ? ` · ${nextWorkout.programDay.label}`
-                  : ""}
-              </p>
-            </div>
-          </div>
-          <p className="mt-3 text-sm text-zinc-400">
-            Today&apos;s workout is done. Rest up — you&apos;re on track.
-          </p>
-        </Card>
-      )}
 
       {initialToday.deload && (
         <div className="rounded-2xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-center text-sm font-semibold text-amber-100">
@@ -171,27 +159,35 @@ export function TodayClient({
           "border-l-4 pl-5",
           theme.border,
           theme.glow,
-          "shadow-xl",
-          showNextWorkout && "opacity-75"
+          "shadow-xl"
         )}
       >
         <SectionLabel>
-          {showNextWorkout ? "Today's workout" : "Today's workout"} · Week{" "}
-          {initialToday.userProgram.currentWeek} · Day{" "}
-          {initialToday.userProgram.nextDayNumber}
+          {completedToday && nextWorkout
+            ? `Next workout · Week ${nextWorkout.week} · Day ${nextWorkout.dayNumber}`
+            : `Today's workout · Week ${initialToday.userProgram.currentWeek} · Day ${initialToday.userProgram.nextDayNumber}`}
         </SectionLabel>
-        {showNextWorkout && (
+        {completedToday && (
           <p className="mt-1 text-xs font-semibold text-emerald-400">Completed ✓</p>
         )}
-        <p className="mt-2 text-xs text-zinc-500">{todayLabel}</p>
+        {!completedToday && (
+          <p className="mt-2 text-xs text-zinc-500">{todayLabel}</p>
+        )}
         <div className="mt-3 flex items-start gap-2">
           <span className="text-3xl">{theme.emoji}</span>
           <div>
             <h2 className="text-3xl font-extrabold tracking-tight text-zinc-50">
               {initialToday.plan.name}
             </h2>
-            <p className="mt-1 text-sm font-medium text-emerald-400/90">
-              Let&apos;s get to work 🔥
+            <p
+              className={cn(
+                "mt-1 text-sm font-medium",
+                completedToday ? "text-zinc-400" : "text-emerald-400/90"
+              )}
+            >
+              {completedToday
+                ? <>Today&apos;s workout is done — you&apos;re on track.</>
+                : <>Let&apos;s get to work 🔥</>}
             </p>
           </div>
         </div>
@@ -235,24 +231,56 @@ export function TodayClient({
         </ul>
       </Card>
 
-      <motion.div whileTap={{ scale: 0.98 }}>
-        <Button
-          className={cn(
-            "h-16 w-full text-lg font-extrabold shadow-lg shadow-emerald-600/30",
-            "bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-400 hover:to-emerald-500"
-          )}
-          size="lg"
-          onClick={startWorkout}
-          disabled={loading}
-        >
-          {activeSessionId ? (
-            <>
-              <RotateCcw className="h-6 w-6" /> Resume Workout 🔄
-            </>
-          ) : (
-            <>Start Workout 🔥</>
-          )}
-        </Button>
+      <motion.div whileTap={{ scale: 0.98 }} className="space-y-3">
+        {completedToday ? (
+          <>
+            <Button
+              className={cn(
+                "h-16 w-full text-lg font-extrabold shadow-lg shadow-sky-600/25",
+                "bg-gradient-to-r from-sky-600 to-sky-700 hover:from-sky-500 hover:to-sky-600"
+              )}
+              size="lg"
+              onClick={startPreview}
+              disabled={loading}
+            >
+              {activeSessionId && activeIsPreview ? (
+                <>
+                  <RotateCcw className="h-6 w-6" /> Resume Preview
+                </>
+              ) : (
+                <>Preview Workout 👀</>
+              )}
+            </Button>
+            <button
+              type="button"
+              onClick={startAnotherToday}
+              disabled={loading}
+              className="mx-auto block text-sm font-medium text-zinc-500 underline-offset-2 transition hover:text-emerald-400 hover:underline disabled:opacity-50"
+            >
+              {activeSessionId && !activeIsPreview
+                ? "Resume today&apos;s workout"
+                : "Another Workout Today"}
+            </button>
+          </>
+        ) : (
+          <Button
+            className={cn(
+              "h-16 w-full text-lg font-extrabold shadow-lg shadow-emerald-600/30",
+              "bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-400 hover:to-emerald-500"
+            )}
+            size="lg"
+            onClick={startWorkout}
+            disabled={loading}
+          >
+            {activeSessionId ? (
+              <>
+                <RotateCcw className="h-6 w-6" /> Resume Workout 🔄
+              </>
+            ) : (
+              <>Start Workout 🔥</>
+            )}
+          </Button>
+        )}
       </motion.div>
     </div>
   );

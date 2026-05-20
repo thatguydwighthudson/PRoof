@@ -1,10 +1,12 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { SectionLabel } from "@/components/ui/section-label";
+import { StreakCardSkeleton } from "@/components/today/today-skeletons";
+import { completionDateKey, parseLogDate } from "@/lib/session-log-date";
 import { cn } from "@/lib/utils";
 
-type SessionRow = { sessionDate: string };
+type SessionRow = { endedAt: string };
 
 function computeStreak(dates: string[]): { count: number; active: boolean } {
   if (dates.length === 0) return { count: 0, active: false };
@@ -14,9 +16,9 @@ function computeStreak(dates: string[]): { count: number; active: boolean } {
   today.setHours(0, 0, 0, 0);
 
   let streak = 0;
-  let cursor = new Date(today);
+  const cursor = new Date(today);
 
-  const latest = new Date(unique[0] + "T12:00:00");
+  const latest = parseLogDate(unique[0]);
   latest.setHours(0, 0, 0, 0);
   const diffDays = Math.floor(
     (today.getTime() - latest.getTime()) / (86400000)
@@ -36,27 +38,39 @@ function computeStreak(dates: string[]): { count: number; active: boolean } {
   return { count: streak, active: streak > 0 };
 }
 
+function countWeekSessions(sessions: SessionRow[], weekAgoMs: number): number {
+  return sessions.filter(
+    (s) => new Date(s.endedAt).getTime() >= weekAgoMs
+  ).length;
+}
+
 export function StreakCard() {
-  const [sessions, setSessions] = useState<SessionRow[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [count, setCount] = useState(0);
+  const [active, setActive] = useState(false);
+  const [weekSessions, setWeekSessions] = useState(0);
 
   useEffect(() => {
     fetch("/api/history")
       .then((r) => r.json())
-      .then((d) => setSessions(d.sessions ?? []))
-      .catch(() => {});
+      .then((d) => {
+        const sessions: SessionRow[] = (d.sessions ?? []).filter(
+          (s: { endedAt?: string | null }) => s.endedAt
+        );
+        const dates = sessions.map((s) => completionDateKey(s.endedAt));
+        const streak = computeStreak(dates);
+        const weekAgoMs = Date.now() - 7 * 86400000;
+        setCount(streak.count);
+        setActive(streak.active);
+        setWeekSessions(countWeekSessions(sessions, weekAgoMs));
+      })
+      .catch(() => {})
+      .finally(() => setLoading(false));
   }, []);
 
-  const { count, active } = useMemo(
-    () => computeStreak(sessions.map((s) => s.sessionDate)),
-    [sessions]
-  );
-
-  const weekSessions = useMemo(() => {
-    const weekAgo = Date.now() - 7 * 86400000;
-    return sessions.filter(
-      (s) => new Date(s.sessionDate).getTime() >= weekAgo
-    ).length;
-  }, [sessions]);
+  if (loading) {
+    return <StreakCardSkeleton />;
+  }
 
   return (
     <div className="mb-4 grid grid-cols-2 gap-3">
@@ -83,7 +97,7 @@ export function StreakCard() {
           <span className="text-2xl">📅</span>
           <span className="text-4xl font-black tabular-nums">{weekSessions}</span>
         </div>
-        <p className="mt-1 text-xs text-zinc-500">sessions</p>
+        <p className="mt-1 text-xs text-zinc-500">completed sessions</p>
       </div>
     </div>
   );

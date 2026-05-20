@@ -3,7 +3,12 @@ import { logSet, deleteSet } from "@/lib/services/session";
 import { inputToKg } from "@/lib/units";
 import { getPreferredUnit } from "@/lib/services/user";
 import { db } from "@/lib/db";
-import { sessionSets, sessionExercises, num } from "@/lib/db/schema";
+import {
+  sessionSets,
+  sessionExercises,
+  workoutSessions,
+  num,
+} from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { checkSetForPr, getPersonalRecord } from "@/lib/services/pr";
 
@@ -31,17 +36,22 @@ export async function PATCH(
     .select({
       set: sessionSets,
       exerciseId: sessionExercises.exerciseId,
+      isPreview: workoutSessions.isPreview,
     })
     .from(sessionSets)
     .innerJoin(
       sessionExercises,
       eq(sessionSets.sessionExerciseId, sessionExercises.id)
     )
+    .innerJoin(
+      workoutSessions,
+      eq(sessionExercises.sessionId, workoutSessions.id)
+    )
     .where(eq(sessionSets.id, parseInt(setId, 10)))
     .limit(1);
 
   let prHit = null;
-  if (body.isCompleted && row && !row.set.isWarmup) {
+  if (body.isCompleted && row && !row.set.isWarmup && !row.isPreview) {
     const pr = await getPersonalRecord(row.exerciseId);
     const w = weightKg ?? num(row.set.weightKg);
     const r = body.reps ?? row.set.reps;
