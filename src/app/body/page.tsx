@@ -41,23 +41,23 @@ export default function BodyCheckInPage() {
     <div className="bg-mesh min-h-screen px-4 pt-6">
       <Link
         href="/settings"
-        className="mb-4 inline-flex items-center text-sm font-medium text-zinc-500"
+        className="mb-4 inline-flex items-center text-sm font-medium text-charcoal-500"
       >
         <ChevronLeft className="h-4 w-4" /> Settings
       </Link>
       <h1 className="mb-1 text-3xl font-extrabold tracking-tight">
         ⚖️ Weekly Check-In
       </h1>
-      <p className="mb-6 text-sm text-zinc-500">Track the trend, not just the day</p>
-      <Card className="mb-6 border-zinc-700/80">
+      <p className="mb-6 text-sm text-charcoal-500">Track the trend, not just the day</p>
+      <Card className="mb-6 border-charcoal-700/80">
         <SectionLabel>Body weight</SectionLabel>
-        <label className="mt-3 block text-sm text-zinc-400">
+        <label className="mt-3 block text-sm text-charcoal-400">
           Weight ({preferredUnit})
         </label>
         <Input
           type="number"
           step="0.1"
-          className="mt-2 border-zinc-700 bg-zinc-950 text-2xl font-bold"
+          className="mt-2 border-charcoal-700 bg-charcoal-950 text-2xl font-bold"
           value={weight}
           onChange={(e) => setWeight(e.target.value)}
           placeholder="0.0"
@@ -71,10 +71,10 @@ export default function BodyCheckInPage() {
         {history.map((m) => (
           <li
             key={m.loggedDate}
-            className="flex justify-between rounded-2xl border border-zinc-800 bg-zinc-900/80 px-4 py-3"
+            className="flex justify-between rounded-2xl border border-charcoal-800 bg-charcoal-900/80 px-4 py-3"
           >
-            <span className="text-sm text-zinc-400">{m.loggedDate}</span>
-            <span className="text-lg font-extrabold tabular-nums text-zinc-100">
+            <span className="text-sm text-charcoal-400">{m.loggedDate}</span>
+            <span className="text-lg font-extrabold tabular-nums text-charcoal-100">
               {m.weightKg != null
                 ? `${displayWeightValue(m.weightKg, preferredUnit)} ${preferredUnit}`
                 : "—"}
@@ -82,7 +82,7 @@ export default function BodyCheckInPage() {
           </li>
         ))}
         {history.length === 0 && (
-          <li className="py-8 text-center text-sm text-zinc-500">
+          <li className="py-8 text-center text-sm text-charcoal-500">
             No check-ins yet
           </li>
         )}

@@ -22,7 +22,7 @@ function FieldError({ message }: { message?: string }) {
 function SuccessMessage({ message }: { message?: string }) {
   if (!message) return null;
   return (
-    <p className="mb-3 rounded-xl bg-emerald-950/50 px-3 py-2 text-xs font-medium text-emerald-400">
+    <p className="mb-3 rounded-xl bg-proof-950/50 px-3 py-2 text-xs font-medium text-proof-400">
       {message}
     </p>
   );
@@ -65,7 +65,7 @@ export function AccountSettings() {
       <SectionLabel>Account</SectionLabel>
 
       {!loaded ? (
-        <p className="mt-3 text-sm text-zinc-500">Loading account…</p>
+        <p className="mt-3 text-sm text-charcoal-500">Loading account…</p>
       ) : (
         <>
           <form action={profileAction} className="mt-3 space-y-3">
@@ -76,7 +76,7 @@ export function AccountSettings() {
             <div>
               <label
                 htmlFor="account-name"
-                className="text-xs font-bold uppercase tracking-wider text-zinc-500"
+                className="text-xs font-bold uppercase tracking-wider text-charcoal-500"
               >
                 Name
               </label>
@@ -94,7 +94,7 @@ export function AccountSettings() {
             <div>
               <label
                 htmlFor="account-email"
-                className="text-xs font-bold uppercase tracking-wider text-zinc-500"
+                className="text-xs font-bold uppercase tracking-wider text-charcoal-500"
               >
                 Email
               </label>
@@ -120,10 +120,10 @@ export function AccountSettings() {
             </Button>
           </form>
 
-          <div className="my-5 border-t border-zinc-800" />
+          <div className="my-5 border-t border-charcoal-800" />
 
           <form action={passwordAction} className="space-y-3">
-            <p className="text-xs font-bold uppercase tracking-wider text-zinc-500">
+            <p className="text-xs font-bold uppercase tracking-wider text-charcoal-500">
               Change password
             </p>
             <SuccessMessage message={passwordState.success} />
@@ -133,7 +133,7 @@ export function AccountSettings() {
             <div>
               <label
                 htmlFor="current-password"
-                className="text-xs font-medium text-zinc-400"
+                className="text-xs font-medium text-charcoal-400"
               >
                 Current password
               </label>
@@ -148,7 +148,7 @@ export function AccountSettings() {
             <div>
               <label
                 htmlFor="new-password"
-                className="text-xs font-medium text-zinc-400"
+                className="text-xs font-medium text-charcoal-400"
               >
                 New password
               </label>
@@ -164,7 +164,7 @@ export function AccountSettings() {
             <div>
               <label
                 htmlFor="confirm-password"
-                className="text-xs font-medium text-zinc-400"
+                className="text-xs font-medium text-charcoal-400"
               >
                 Confirm new password
               </label>
@@ -189,7 +189,7 @@ export function AccountSettings() {
         </>
       )}
 
-      <div className="mt-4 border-t border-zinc-800 pt-4">
+      <div className="mt-4 border-t border-charcoal-800 pt-4">
         <SignOutButton />
       </div>
     </Card>

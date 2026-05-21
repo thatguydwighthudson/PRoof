@@ -19,7 +19,7 @@ export function PrBanner({
       particleCount: 80,
       spread: 70,
       origin: { y: 0.35 },
-      colors: ["#fbbf24", "#10b981", "#fafafa"],
+      colors: ["#fbbf24", "#0088FF", "#FFFFFF"],
     });
     const t = setTimeout(onDismiss, 3000);
     return () => clearTimeout(t);
@@ -35,7 +35,7 @@ export function PrBanner({
           transition={{ type: "spring", stiffness: 400, damping: 28 }}
           className="fixed left-0 right-0 top-0 z-[60] mx-auto max-w-lg px-4 pt-[max(0.75rem,env(safe-area-inset-top))]"
         >
-          <div className="flex items-center gap-3 rounded-2xl border border-amber-400/40 bg-gradient-to-r from-amber-500/25 via-amber-600/20 to-zinc-900 px-4 py-4 shadow-lg shadow-amber-500/20">
+          <div className="flex items-center gap-3 rounded-2xl border border-amber-400/40 bg-gradient-to-r from-amber-500/25 via-amber-600/20 to-charcoal-900 px-4 py-4 shadow-lg shadow-amber-500/20">
             <span className="animate-bounce text-3xl">🏆</span>
             <div>
               <p className="text-sm font-extrabold uppercase tracking-wide text-amber-200">

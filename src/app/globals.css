@@ -1,14 +1,23 @@
 @import "tailwindcss";
 
+/* PRoof brand palette */
 :root {
-  --background: #050506;
-  --foreground: #fafafa;
-  --card: #121214;
-  --border: #27272a;
-  --primary: #10b981;
+  --proof-bg: #181a1f;
+  --proof-blue: #0088ff;
+  --proof-white: #ffffff;
+  --proof-surface: #1f2329;
+  --proof-surface-elevated: #262a31;
+  --proof-border: #2f343d;
+  --proof-muted: #8d939f;
+
+  --background: var(--proof-bg);
+  --foreground: var(--proof-white);
+  --card: var(--proof-surface);
+  --border: var(--proof-border);
+  --primary: var(--proof-blue);
   --accent-push: #ef4444;
   --accent-pull: #3b82f6;
-  --accent-legs: #10b981;
+  --accent-legs: #22c55e;
   --accent-recovery: #14b8a6;
 }
 
@@ -16,6 +25,31 @@
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
+
+  --color-charcoal: #181a1f;
+  --color-charcoal-50: #f5f6f8;
+  --color-charcoal-100: #eceef2;
+  --color-charcoal-200: #d8dce3;
+  --color-charcoal-300: #b4bac4;
+  --color-charcoal-400: #9198a3;
+  --color-charcoal-500: #6d737d;
+  --color-charcoal-600: #4a5059;
+  --color-charcoal-700: #343941;
+  --color-charcoal-800: #272b33;
+  --color-charcoal-900: #1e2228;
+  --color-charcoal-950: #181a1f;
+
+  --color-proof-50: #e6f3ff;
+  --color-proof-100: #cce7ff;
+  --color-proof-200: #99cfff;
+  --color-proof-300: #66b8ff;
+  --color-proof-400: #33a0ff;
+  --color-proof-500: #0088ff;
+  --color-proof-600: #0070d4;
+  --color-proof-700: #0059a8;
+  --color-proof-800: #00427d;
+  --color-proof-900: #002b52;
+  --color-proof-950: #001833;
 }
 
 body {
@@ -61,10 +95,10 @@ input[type="number"]::-webkit-outer-spin-button {
 @keyframes glow-pulse {
   0%,
   100% {
-    box-shadow: 0 0 20px rgba(16, 185, 129, 0.15);
+    box-shadow: 0 0 20px rgba(0, 136, 255, 0.15);
   }
   50% {
-    box-shadow: 0 0 32px rgba(16, 185, 129, 0.35);
+    box-shadow: 0 0 32px rgba(0, 136, 255, 0.35);
   }
 }
 
@@ -94,7 +128,7 @@ input[type="number"]::-webkit-outer-spin-button {
 
 .bg-mesh {
   background:
-    radial-gradient(ellipse 80% 50% at 50% -20%, rgba(16, 185, 129, 0.12), transparent),
-    radial-gradient(ellipse 60% 40% at 100% 0%, rgba(239, 68, 68, 0.06), transparent),
+    radial-gradient(ellipse 80% 50% at 50% -20%, rgba(0, 136, 255, 0.14), transparent),
+    radial-gradient(ellipse 60% 40% at 100% 0%, rgba(0, 136, 255, 0.06), transparent),
     var(--background);
 }

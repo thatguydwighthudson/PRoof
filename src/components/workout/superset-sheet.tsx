@@ -134,21 +134,21 @@ export function SupersetSheet({
             animate={{ y: 0 }}
             exit={{ y: "100%" }}
             transition={{ type: "spring", damping: 28, stiffness: 320 }}
-            className="relative z-10 max-h-[70vh] w-full rounded-t-3xl border-t border-zinc-700 bg-zinc-950 shadow-2xl"
+            className="relative z-10 max-h-[70vh] w-full rounded-t-3xl border-t border-charcoal-700 bg-charcoal-950 shadow-2xl"
           >
             <motion.div
-              className="mx-auto mt-2 h-1 w-10 shrink-0 rounded-full bg-zinc-600"
+              className="mx-auto mt-2 h-1 w-10 shrink-0 rounded-full bg-charcoal-600"
               aria-hidden
             />
 
             <div className="flex items-center justify-between px-4 pt-3 pb-2">
-              <h2 className="text-lg font-extrabold text-zinc-50">
+              <h2 className="text-lg font-extrabold text-charcoal-50">
                 Superset — {target.exerciseName}
               </h2>
               <button
                 type="button"
                 onClick={onClose}
-                className="flex h-9 w-9 items-center justify-center rounded-full bg-zinc-800 text-zinc-300 hover:bg-zinc-700"
+                className="flex h-9 w-9 items-center justify-center rounded-full bg-charcoal-800 text-charcoal-300 hover:bg-charcoal-700"
                 aria-label="Close"
               >
                 <X className="h-5 w-5" />
@@ -173,12 +173,12 @@ export function SupersetSheet({
                 </button>
               )}
 
-              <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500">
+              <p className="text-xs font-semibold uppercase tracking-wide text-charcoal-500">
                 {inSuperset ? "Add another partner" : "Superset with"}
               </p>
 
               {available.length === 0 ? (
-                <p className="py-6 text-center text-sm text-zinc-500">
+                <p className="py-6 text-center text-sm text-charcoal-500">
                   No other exercises available to pair.
                 </p>
               ) : (
@@ -190,11 +190,11 @@ export function SupersetSheet({
                     onClick={() => void linkWith(p.sessionExerciseId)}
                     className={cn(
                       "flex w-full items-center gap-3 rounded-2xl border px-4 py-4 text-left transition-colors",
-                      "border-zinc-700/80 bg-zinc-900/60 hover:border-violet-600/50 hover:bg-zinc-900"
+                      "border-charcoal-700/80 bg-charcoal-900/60 hover:border-violet-600/50 hover:bg-charcoal-900"
                     )}
                   >
                     <Link2 className="h-5 w-5 shrink-0 text-violet-400" />
-                    <span className="min-w-0 flex-1 truncate text-sm font-bold text-zinc-100">
+                    <span className="min-w-0 flex-1 truncate text-sm font-bold text-charcoal-100">
                       {p.exerciseName}
                     </span>
                     {p.supersetGroupId != null && (
@@ -210,7 +210,7 @@ export function SupersetSheet({
             <div className="px-4 pb-8">
               <Button
                 variant="ghost"
-                className="h-12 w-full text-base font-semibold text-zinc-400"
+                className="h-12 w-full text-base font-semibold text-charcoal-400"
                 onClick={onClose}
                 disabled={busy}
               >

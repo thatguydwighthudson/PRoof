@@ -373,7 +373,7 @@ export function WorkoutSession({
 
   if (!session) {
     return (
-      <div className="flex min-h-[50vh] flex-col items-center justify-center gap-3 text-zinc-500">
+      <div className="flex min-h-[50vh] flex-col items-center justify-center gap-3 text-charcoal-500">
         <span className="animate-pulse text-4xl">🏋️</span>
         <p className="font-medium">Loading workout…</p>
       </div>
@@ -389,12 +389,12 @@ export function WorkoutSession({
         <Button variant="ghost" size="sm" onClick={() => router.push("/today")}>
           <ChevronLeft className="h-4 w-4" /> Exit
         </Button>
-        <p className="mt-12 text-center text-zinc-400">
+        <p className="mt-12 text-center text-charcoal-400">
           No exercises in this session.
         </p>
         <Button
           variant="outline"
-          className="mx-auto mt-6 h-12 w-full max-w-sm border-dashed border-emerald-600/50 bg-emerald-950/20 text-base font-bold text-emerald-300"
+          className="mx-auto mt-6 h-12 w-full max-w-sm border-dashed border-proof-600/50 bg-proof-950/20 text-base font-bold text-proof-300"
           onClick={() => setAddExerciseOpen(true)}
         >
           <Plus className="h-5 w-5" /> Add Exercise
@@ -430,7 +430,7 @@ export function WorkoutSession({
 
   if (!current) {
     return (
-      <div className="flex min-h-[50vh] flex-col items-center justify-center gap-3 text-zinc-500">
+      <div className="flex min-h-[50vh] flex-col items-center justify-center gap-3 text-charcoal-500">
         <span className="animate-pulse text-4xl">🏋️</span>
         <p className="font-medium">Loading workout…</p>
       </div>
@@ -458,7 +458,7 @@ export function WorkoutSession({
       )}
 
       {userName && (
-        <p className="mb-2 text-center text-xs font-semibold uppercase tracking-wider text-zinc-500">
+        <p className="mb-2 text-center text-xs font-semibold uppercase tracking-wider text-charcoal-500">
           {workoutLogTitle(userName)}
         </p>
       )}
@@ -470,7 +470,7 @@ export function WorkoutSession({
         <Button
           variant="ghost"
           size="sm"
-          className="text-zinc-400 hover:text-zinc-200"
+          className="text-charcoal-400 hover:text-charcoal-200"
           onClick={() => setShowEndConfirm(true)}
         >
           {isPreview ? "Save & exit" : "End Workout"}
@@ -479,11 +479,11 @@ export function WorkoutSession({
 
       <div className="mb-3 text-center" aria-hidden>
         {prevExercise && (
-          <p className="truncate text-[11px] text-zinc-600">
+          <p className="truncate text-[11px] text-charcoal-600">
             {prevExercise.exercise.name}
           </p>
         )}
-        <p className="text-xs font-medium tracking-wide text-zinc-500">
+        <p className="text-xs font-medium tracking-wide text-charcoal-500">
           Exercise {exerciseIndex + 1} of {session.exercises.length}
         </p>
       </div>
@@ -491,7 +491,7 @@ export function WorkoutSession({
       <button
         type="button"
         onClick={() => setExerciseListOpen(true)}
-        className="mx-auto mb-4 block rounded-full border border-zinc-800/80 bg-zinc-900/50 px-4 py-2 text-xs font-semibold text-zinc-400 transition hover:border-zinc-600 hover:text-zinc-300"
+        className="mx-auto mb-4 block rounded-full border border-charcoal-800/80 bg-charcoal-900/50 px-4 py-2 text-xs font-semibold text-charcoal-400 transition hover:border-charcoal-600 hover:text-charcoal-300"
       >
         View all · {session.exercises.length} exercises
       </button>
@@ -516,7 +516,7 @@ export function WorkoutSession({
           className="flex flex-1 flex-col touch-pan-y"
         >
           <div className="flex flex-wrap items-center justify-center gap-2">
-            <h1 className="text-center text-3xl font-extrabold leading-tight tracking-tight text-zinc-50">
+            <h1 className="text-center text-3xl font-extrabold leading-tight tracking-tight text-charcoal-50">
               {current.exercise.name}
             </h1>
             {current.supersetGroupId != null && (
@@ -530,7 +530,7 @@ export function WorkoutSession({
             <Button
               variant="outline"
               size="sm"
-              className="h-8 border-zinc-700/80 text-xs text-zinc-400"
+              className="h-8 border-charcoal-700/80 text-xs text-charcoal-400"
               onClick={() => setShowExerciseInfo((o) => !o)}
             >
               <Info className="h-3.5 w-3.5" />
@@ -557,23 +557,23 @@ export function WorkoutSession({
                 exit={{ height: 0, opacity: 0 }}
                 className="overflow-hidden"
               >
-                <Card className="mt-3 space-y-2 border-zinc-700/80 p-4 text-sm text-zinc-300">
+                <Card className="mt-3 space-y-2 border-charcoal-700/80 p-4 text-sm text-charcoal-300">
                   {current.muscleGroup && (
                     <p>
-                      <span className="font-semibold text-zinc-400">Muscle: </span>
+                      <span className="font-semibold text-charcoal-400">Muscle: </span>
                       {current.muscleGroup.name}
                     </p>
                   )}
                   {current.exercise.equipment && (
                     <p>
-                      <span className="font-semibold text-zinc-400">Equipment: </span>
+                      <span className="font-semibold text-charcoal-400">Equipment: </span>
                       {current.exercise.equipment}
                     </p>
                   )}
                   {current.exercise.instructions ? (
                     <p className="leading-relaxed">{current.exercise.instructions}</p>
                   ) : (
-                    <p className="text-zinc-500">No written cues for this movement yet.</p>
+                    <p className="text-charcoal-500">No written cues for this movement yet.</p>
                   )}
                   <a
                     href={youtubeSearchUrl(current.exercise.youtubeQuery)}
@@ -590,17 +590,17 @@ export function WorkoutSession({
 
           {current.isUserAdded && (
             <p className="mt-2 text-center">
-              <span className="rounded-full bg-zinc-800 px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-zinc-500">
+              <span className="rounded-full bg-charcoal-800 px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-charcoal-500">
                 Added by you
               </span>
             </p>
           )}
 
           {current.suggestion && (
-            <p className="mt-3 text-center text-sm font-semibold text-emerald-400">
+            <p className="mt-3 text-center text-sm font-semibold text-proof-400">
               ⬆️ Suggested:{" "}
               {formatWeightShort(current.suggestion.suggestedWeightKg, preferredUnit)}{" "}
-              <span className="text-zinc-500">
+              <span className="text-charcoal-500">
                 (was {formatWeightShort(current.suggestion.lastWeightKg, preferredUnit)})
               </span>
             </p>
@@ -613,7 +613,7 @@ export function WorkoutSession({
           )}
 
           {current.lastPerformance && (
-            <p className="mt-2 text-center text-xs text-zinc-500">
+            <p className="mt-2 text-center text-xs text-charcoal-500">
               Last:{" "}
               {current.lastPerformance.sets
                 .map(
@@ -627,7 +627,7 @@ export function WorkoutSession({
           {current.lastPerformance?.typical &&
             (current.lastPerformance.typical.reps != null ||
               current.lastPerformance.typical.weightKg != null) && (
-              <p className="mt-1 text-center text-xs text-emerald-500/80">
+              <p className="mt-1 text-center text-xs text-proof-500/80">
                 Usual: {current.lastPerformance.typical.reps ?? "?"} reps
                 {current.lastPerformance.typical.weightKg != null &&
                   !current.exercise.isBodyweight &&
@@ -639,7 +639,7 @@ export function WorkoutSession({
             <Button
               variant="outline"
               size="sm"
-              className="flex-1 border-emerald-600/50 bg-emerald-950/20 text-emerald-300 hover:bg-emerald-950/40"
+              className="flex-1 border-proof-600/50 bg-proof-950/20 text-proof-300 hover:bg-proof-950/40"
               onClick={addWorkingSet}
             >
               <Plus className="h-4 w-4" /> Add Set
@@ -647,7 +647,7 @@ export function WorkoutSession({
             <Button
               variant="outline"
               size="sm"
-              className="flex-1 border-zinc-700"
+              className="flex-1 border-charcoal-700"
               onClick={addWarmup}
             >
               <Plus className="h-4 w-4" /> Warm-up
@@ -675,10 +675,10 @@ export function WorkoutSession({
               className="pointer-events-none mt-8 select-none opacity-30"
               aria-hidden
             >
-              <p className="text-[10px] font-bold uppercase tracking-wider text-zinc-500">
+              <p className="text-[10px] font-bold uppercase tracking-wider text-charcoal-500">
                 Up next
               </p>
-              <p className="mt-1 truncate text-lg font-bold text-zinc-400">
+              <p className="mt-1 truncate text-lg font-bold text-charcoal-400">
                 {nextExercise.exercise.name}
               </p>
             </div>
@@ -734,11 +734,11 @@ export function WorkoutSession({
 
       {showEndConfirm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 px-4 backdrop-blur-sm">
-          <Card className="w-full max-w-sm border-zinc-700 p-6">
-            <h2 className="text-xl font-extrabold text-zinc-50">
+          <Card className="w-full max-w-sm border-charcoal-700 p-6">
+            <h2 className="text-xl font-extrabold text-charcoal-50">
               {isPreview ? "Save preview?" : "End workout?"}
             </h2>
-            <p className="mt-2 text-sm text-zinc-400">
+            <p className="mt-2 text-sm text-charcoal-400">
               {isPreview
                 ? "Your planned sets and exercises will be saved. This won\u2019t count as a completed workout."
                 : "You\u2019ll log how it felt and save this session. You can still come back from Today if you exit early."}
@@ -771,9 +771,9 @@ export function WorkoutSession({
 
       {showComplete && (
         <div className="fixed inset-0 z-50 flex items-end bg-black/80 backdrop-blur-sm">
-          <Card className="w-full rounded-b-none rounded-t-3xl border-zinc-700 p-6">
+          <Card className="w-full rounded-b-none rounded-t-3xl border-charcoal-700 p-6">
             <h2 className="text-xl font-extrabold">How did it feel?</h2>
-            <p className="mt-1 text-xs text-zinc-500">Tap your honest vibe</p>
+            <p className="mt-1 text-xs text-charcoal-500">Tap your honest vibe</p>
             <div className="my-5 flex justify-between gap-2">
               {FEEL_EMOJIS.map((emoji, i) => {
                 const n = i + 1;
@@ -785,12 +785,12 @@ export function WorkoutSession({
                     className={cn(
                       "flex h-14 flex-1 flex-col items-center justify-center rounded-2xl transition-all",
                       feel === n
-                        ? "scale-105 bg-emerald-600 ring-2 ring-emerald-400"
-                        : "bg-zinc-800 hover:bg-zinc-700"
+                        ? "scale-105 bg-proof-600 ring-2 ring-proof-400"
+                        : "bg-charcoal-800 hover:bg-charcoal-700"
                     )}
                   >
                     <span className="text-2xl">{emoji}</span>
-                    <span className="mt-0.5 text-[9px] font-bold uppercase text-zinc-400">
+                    <span className="mt-0.5 text-[9px] font-bold uppercase text-charcoal-400">
                       {feelLabel(n)}
                     </span>
                   </button>
@@ -909,9 +909,9 @@ export function WorkoutSession({
       >
         <span className="relative flex h-14 w-14 items-center justify-center rounded-full bg-violet-600 shadow-lg shadow-violet-600/35 ring-2 ring-violet-400/40">
           <Dumbbell className="h-6 w-6 text-violet-50" />
-          <MessageCircle className="absolute -bottom-0.5 -right-0.5 h-5 w-5 rounded-full bg-zinc-950 text-violet-200 ring-2 ring-violet-600" />
+          <MessageCircle className="absolute -bottom-0.5 -right-0.5 h-5 w-5 rounded-full bg-charcoal-950 text-violet-200 ring-2 ring-violet-600" />
         </span>
-        <span className="rounded-full bg-zinc-950/90 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wide text-violet-200 ring-1 ring-violet-500/30">
+        <span className="rounded-full bg-charcoal-950/90 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wide text-violet-200 ring-1 ring-violet-500/30">
           Session Coach
         </span>
       </button>
@@ -972,10 +972,10 @@ function SetCard({
       className={cn(
         "rounded-2xl border-2 p-3 transition-colors",
         set.isCompleted
-          ? "border-emerald-600/60 bg-emerald-950/40"
-          : "border-zinc-700/80 bg-zinc-900/50",
+          ? "border-proof-600/60 bg-proof-950/40"
+          : "border-charcoal-700/80 bg-charcoal-900/50",
         set.isWarmup && "opacity-75",
-        isActive && !set.isCompleted && "animate-glow-pulse border-emerald-500/50"
+        isActive && !set.isCompleted && "animate-glow-pulse border-proof-500/50"
       )}
     >
       <div className="flex flex-wrap items-center gap-2">
@@ -983,7 +983,7 @@ function SetCard({
           <span
             className={cn(
               "flex h-9 w-9 items-center justify-center rounded-xl text-xs font-black",
-              set.isWarmup ? "bg-zinc-700 text-zinc-300" : "bg-zinc-800 text-zinc-200"
+              set.isWarmup ? "bg-charcoal-700 text-charcoal-300" : "bg-charcoal-800 text-charcoal-200"
             )}
           >
             {set.isWarmup ? "W" : set.setNumber}
@@ -991,7 +991,7 @@ function SetCard({
           <button
             type="button"
             onClick={onDelete}
-            className="text-zinc-600 hover:text-red-400"
+            className="text-charcoal-600 hover:text-red-400"
             aria-label="Delete set"
           >
             <Trash2 className="h-3.5 w-3.5" />
@@ -1001,7 +1001,7 @@ function SetCard({
           type="number"
           inputMode="decimal"
           placeholder="Reps"
-          className="h-11 w-16 border-zinc-700 bg-zinc-950"
+          className="h-11 w-16 border-charcoal-700 bg-charcoal-950"
           defaultValue={set.reps ?? ""}
           onBlur={(e) =>
             onUpdate(set.id, { reps: parseInt(e.target.value, 10) || null })
@@ -1014,7 +1014,7 @@ function SetCard({
               inputMode="decimal"
               step="0.5"
               placeholder={preferredUnit}
-              className="h-11 w-20 border-zinc-700 bg-zinc-950 font-bold"
+              className="h-11 w-20 border-charcoal-700 bg-charcoal-950 font-bold"
               defaultValue={display ?? ""}
               onBlur={(e) =>
                 onUpdate(set.id, {
@@ -1036,7 +1036,7 @@ function SetCard({
           type="number"
           inputMode="numeric"
           placeholder="RPE"
-          className="h-11 w-14 border-zinc-700 bg-zinc-950"
+          className="h-11 w-14 border-charcoal-700 bg-charcoal-950"
           min={1}
           max={10}
           defaultValue={set.rpe ?? ""}
@@ -1051,7 +1051,7 @@ function SetCard({
             <button
               type="button"
               onClick={applyTypical}
-              className="rounded-lg bg-zinc-800 px-2 py-1 text-[10px] font-bold text-emerald-400 hover:bg-zinc-700"
+              className="rounded-lg bg-charcoal-800 px-2 py-1 text-[10px] font-bold text-proof-400 hover:bg-charcoal-700"
             >
               Use last
             </button>
@@ -1063,8 +1063,8 @@ function SetCard({
             className={cn(
               "flex min-h-11 min-w-[72px] items-center justify-center rounded-xl px-4 text-sm font-bold transition-colors",
               set.isCompleted
-                ? "bg-emerald-600 text-white"
-                : "bg-zinc-800 text-zinc-200 ring-1 ring-zinc-600"
+                ? "bg-proof-600 text-white"
+                : "bg-charcoal-800 text-charcoal-200 ring-1 ring-charcoal-600"
             )}
           >
             {justCompleted || set.isCompleted ? (

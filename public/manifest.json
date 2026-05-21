@@ -4,18 +4,18 @@
   "description": "Personal workout tracking",
   "start_url": "/today",
   "display": "standalone",
-  "background_color": "#09090b",
-  "theme_color": "#09090b",
+  "background_color": "#181A1F",
+  "theme_color": "#181A1F",
   "orientation": "portrait",
   "icons": [
     {
-      "src": "/icon",
+      "src": "/icon-512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "/icon",
+      "src": "/icon-512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "maskable"

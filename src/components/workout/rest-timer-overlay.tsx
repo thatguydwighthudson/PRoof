@@ -24,7 +24,7 @@ export function RestTimerOverlay({
   const offset = circumference * (1 - pct);
 
   const ringColor =
-    pct > 0.5 ? "stroke-emerald-400" : pct > 0.2 ? "stroke-amber-400" : "stroke-red-500";
+    pct > 0.5 ? "stroke-proof-400" : pct > 0.2 ? "stroke-amber-400" : "stroke-red-500";
 
   useEffect(() => {
     if (seconds <= 0) {
@@ -43,7 +43,7 @@ export function RestTimerOverlay({
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-sm"
     >
       <div className="relative flex flex-col items-center">
-        <p className="mb-2 text-xs font-bold uppercase tracking-[0.25em] text-zinc-500">
+        <p className="mb-2 text-xs font-bold uppercase tracking-[0.25em] text-charcoal-500">
           Rest
         </p>
         <div className="relative flex h-72 w-72 items-center justify-center">
@@ -55,7 +55,7 @@ export function RestTimerOverlay({
               fill="none"
               stroke="currentColor"
               strokeWidth="8"
-              className="text-zinc-800"
+              className="text-charcoal-800"
             />
             <circle
               cx="130"
@@ -82,7 +82,7 @@ export function RestTimerOverlay({
               className={cn(
                 "block text-8xl font-black tabular-nums tracking-tighter",
                 pct > 0.5
-                  ? "text-emerald-400"
+                  ? "text-proof-400"
                   : pct > 0.2
                     ? "text-amber-400"
                     : "text-red-400"

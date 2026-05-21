@@ -53,7 +53,7 @@ export default async function ExerciseDetailPage({
     <div className="bg-mesh min-h-screen px-4 pb-8 pt-6">
       <Link
         href="/exercises"
-        className="mb-4 inline-flex items-center text-sm font-medium text-zinc-500 hover:text-emerald-400"
+        className="mb-4 inline-flex items-center text-sm font-medium text-charcoal-500 hover:text-proof-400"
       >
         <ChevronLeft className="h-4 w-4" /> Exercises
       </Link>
@@ -61,26 +61,26 @@ export default async function ExerciseDetailPage({
       <div className="mb-2 flex flex-wrap items-center gap-2">
         <DifficultyPill difficulty={exercise.difficulty} />
         {exercise.isBodyweight && (
-          <span className="rounded-full bg-zinc-800 px-2 py-0.5 text-[10px] font-bold uppercase text-zinc-400">
+          <span className="rounded-full bg-charcoal-800 px-2 py-0.5 text-[10px] font-bold uppercase text-charcoal-400">
             Bodyweight
           </span>
         )}
         {muscleGroup && (
-          <span className="rounded-full bg-emerald-500/15 px-2 py-0.5 text-[10px] font-bold uppercase text-emerald-300">
+          <span className="rounded-full bg-proof-500/15 px-2 py-0.5 text-[10px] font-bold uppercase text-proof-300">
             {muscleGroup.name}
           </span>
         )}
       </div>
 
-      <h1 className="text-3xl font-extrabold tracking-tight text-zinc-50">
+      <h1 className="text-3xl font-extrabold tracking-tight text-charcoal-50">
         {exercise.name}
       </h1>
       {exercise.equipment && (
-        <p className="mt-1 text-sm text-zinc-500">{exercise.equipment}</p>
+        <p className="mt-1 text-sm text-charcoal-500">{exercise.equipment}</p>
       )}
 
       {exercise.secondaryMuscles && exercise.secondaryMuscles.length > 0 && (
-        <p className="mt-2 text-xs text-zinc-500">
+        <p className="mt-2 text-xs text-charcoal-500">
           Also hits: {exercise.secondaryMuscles.join(", ")}
         </p>
       )}
@@ -97,16 +97,16 @@ export default async function ExerciseDetailPage({
       {exercise.instructions && (
         <Card className="mt-6">
           <SectionLabel>Instructions</SectionLabel>
-          <p className="mt-3 text-sm leading-relaxed text-zinc-300">
+          <p className="mt-3 text-sm leading-relaxed text-charcoal-300">
             {exercise.instructions}
           </p>
         </Card>
       )}
 
-      <Card className="mt-4 border-amber-500/20 bg-gradient-to-br from-amber-500/10 to-zinc-900">
+      <Card className="mt-4 border-amber-500/20 bg-gradient-to-br from-amber-500/10 to-charcoal-900">
         <SectionLabel>Personal records 🏆</SectionLabel>
         {!pr ? (
-          <p className="mt-3 text-sm text-zinc-500">
+          <p className="mt-3 text-sm text-charcoal-500">
             No PR logged yet. Complete a workout with this exercise to set your
             first record.
           </p>
@@ -142,10 +142,10 @@ export default async function ExerciseDetailPage({
 function PrStat({ label, value }: { label: string; value: string }) {
   return (
     <div>
-      <dt className="text-[10px] font-bold uppercase tracking-wider text-zinc-500">
+      <dt className="text-[10px] font-bold uppercase tracking-wider text-charcoal-500">
         {label}
       </dt>
-      <dd className="mt-1 text-xl font-extrabold tabular-nums text-zinc-50">
+      <dd className="mt-1 text-xl font-extrabold tabular-nums text-charcoal-50">
         {value}
       </dd>
     </div>

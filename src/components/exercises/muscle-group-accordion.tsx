@@ -43,7 +43,7 @@ export function MuscleGroupAccordion<
     return (
       <Card className={cn("py-10 text-center", className)}>
         <span className="text-3xl">🔍</span>
-        <p className="mt-2 text-sm text-zinc-400">{emptyMessage}</p>
+        <p className="mt-2 text-sm text-charcoal-400">{emptyMessage}</p>
       </Card>
     );
   }
@@ -52,24 +52,24 @@ export function MuscleGroupAccordion<
     <motion.div layout className={cn("space-y-2", className)}>
       {sections.map(({ group, items: groupItems }) => {
         const open = openGroups[group] ?? false;
-        const dot = MUSCLE_DOT[group] ?? "bg-zinc-500";
+        const dot = MUSCLE_DOT[group] ?? "bg-charcoal-500";
 
         return (
           <Card key={group} className="overflow-hidden p-0">
             <button
               type="button"
               onClick={() => toggle(group)}
-              className="flex w-full items-center gap-3 px-4 py-3.5 text-left transition-colors hover:bg-zinc-800/50"
+              className="flex w-full items-center gap-3 px-4 py-3.5 text-left transition-colors hover:bg-charcoal-800/50"
               aria-expanded={open}
             >
               <span className={cn("h-3 w-3 shrink-0 rounded-full", dot)} />
-              <span className="flex-1 font-bold text-zinc-100">{group}</span>
-              <span className="text-xs font-medium text-zinc-500">
+              <span className="flex-1 font-bold text-charcoal-100">{group}</span>
+              <span className="text-xs font-medium text-charcoal-500">
                 {groupItems.length}
               </span>
               <ChevronDown
                 className={cn(
-                  "h-5 w-5 shrink-0 text-zinc-500 transition-transform duration-200",
+                  "h-5 w-5 shrink-0 text-charcoal-500 transition-transform duration-200",
                   open && "rotate-180"
                 )}
               />
@@ -81,7 +81,7 @@ export function MuscleGroupAccordion<
                   animate={{ height: "auto", opacity: 1 }}
                   exit={{ height: 0, opacity: 0 }}
                   transition={{ duration: 0.2 }}
-                  className="overflow-hidden border-t border-zinc-800/80"
+                  className="overflow-hidden border-t border-charcoal-800/80"
                 >
                   <div className="space-y-2 p-3 pt-2">
                     {groupItems.map((item) => (

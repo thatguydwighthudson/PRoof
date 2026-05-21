@@ -2,6 +2,7 @@ export const dynamic = "force-dynamic";
 
 import Link from "next/link";
 import { Settings } from "lucide-react";
+import { AppLogo } from "@/components/brand/app-logo";
 import { TodayClient } from "@/components/today/today-client";
 import { getTodayPlan, getNextWorkoutPreview } from "@/lib/services/program";
 import {
@@ -26,16 +27,14 @@ export default async function TodayPage() {
     <div className="bg-mesh min-h-screen px-4 pt-6">
       <header className="mb-6 flex items-center justify-between">
         <div>
-          <p className="text-xs font-bold uppercase tracking-[0.2em] text-zinc-500">
-            PRoof
-          </p>
+          <AppLogo className="mb-1" height={28} />
           <h1 className="text-3xl font-extrabold tracking-tight">
             {user ? timeOfDayGreeting(user.name) : "Today 🏋️"}
           </h1>
         </div>
         <Link
           href="/settings"
-          className="flex h-12 w-12 items-center justify-center rounded-2xl bg-zinc-900/80 text-sm font-bold text-emerald-400 ring-1 ring-zinc-800 transition hover:text-emerald-300"
+          className="flex h-12 w-12 items-center justify-center rounded-2xl bg-charcoal-900/80 text-sm font-bold text-proof-400 ring-1 ring-charcoal-800 transition hover:text-proof-300"
           aria-label="Settings"
           title={user?.name}
         >

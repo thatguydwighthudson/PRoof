@@ -15,6 +15,16 @@ export const metadata: Metadata = {
   title: "PRoof",
   description: "Personal workout tracking",
   manifest: "/manifest.json",
+  icons: {
+    icon: [
+      { url: "/favicon.ico", sizes: "48x48" },
+      { url: "/favicon-32.png", sizes: "32x32", type: "image/png" },
+      { url: "/favicon-48.png", sizes: "48x48", type: "image/png" },
+      { url: "/icon-512.png", sizes: "512x512", type: "image/png" },
+    ],
+    shortcut: "/favicon.ico",
+    apple: "/apple-touch-icon.png",
+  },
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
@@ -23,7 +33,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#09090b",
+  themeColor: "#181A1F",
   width: "device-width",
   initialScale: 1,
   maximumScale: 1,
@@ -36,7 +46,7 @@ export default function RootLayout({
 }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en" className={`${geist.variable} dark h-full`}>
-      <body className="min-h-full bg-zinc-950 text-zinc-50 antialiased">
+      <body className="min-h-full bg-charcoal text-white antialiased">
         <UserProvider>
           <AppChrome>{children}</AppChrome>
         </UserProvider>

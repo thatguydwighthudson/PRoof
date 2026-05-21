@@ -35,7 +35,7 @@ export default async function ExercisesPage() {
       <h1 className="mb-1 text-3xl font-extrabold tracking-tight">
         Exercises 💪
       </h1>
-      <p className="mb-4 text-sm text-zinc-500">
+      <p className="mb-4 text-sm text-charcoal-500">
         {items.length} movements · search or filter by muscle group
       </p>
       <ExerciseBrowser items={items} />

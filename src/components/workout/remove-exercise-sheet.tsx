@@ -135,21 +135,21 @@ export function RemoveExerciseSheet({
             animate={{ y: 0 }}
             exit={{ y: "100%" }}
             transition={{ type: "spring", damping: 28, stiffness: 320 }}
-            className="relative z-10 w-full rounded-t-3xl border-t border-zinc-700 bg-zinc-950 shadow-2xl"
+            className="relative z-10 w-full rounded-t-3xl border-t border-charcoal-700 bg-charcoal-950 shadow-2xl"
           >
             <motion.div
-              className="mx-auto mt-2 h-1 w-10 shrink-0 rounded-full bg-zinc-600"
+              className="mx-auto mt-2 h-1 w-10 shrink-0 rounded-full bg-charcoal-600"
               aria-hidden
             />
 
             <div className="flex items-center justify-between px-4 pt-3 pb-2">
-              <h2 className="text-lg font-extrabold text-zinc-50">
+              <h2 className="text-lg font-extrabold text-charcoal-50">
                 Remove {target.exerciseName}?
               </h2>
               <button
                 type="button"
                 onClick={onClose}
-                className="flex h-9 w-9 items-center justify-center rounded-full bg-zinc-800 text-zinc-300 hover:bg-zinc-700"
+                className="flex h-9 w-9 items-center justify-center rounded-full bg-charcoal-800 text-charcoal-300 hover:bg-charcoal-700"
                 aria-label="Close"
               >
                 <X className="h-5 w-5" />
@@ -163,14 +163,14 @@ export function RemoveExerciseSheet({
                 onClick={chooseSession}
                 className={cn(
                   "flex w-full flex-col items-start gap-2 rounded-2xl border px-4 py-4 text-left transition-colors",
-                  "border-zinc-700/80 bg-zinc-900/60 hover:border-zinc-600 hover:bg-zinc-900"
+                  "border-charcoal-700/80 bg-charcoal-900/60 hover:border-charcoal-600 hover:bg-charcoal-900"
                 )}
               >
-                <span className="flex items-center gap-2 text-sm font-bold text-zinc-200">
-                  <Calendar className="h-5 w-5 text-zinc-400" />
+                <span className="flex items-center gap-2 text-sm font-bold text-charcoal-200">
+                  <Calendar className="h-5 w-5 text-charcoal-400" />
                   Remove for this session only
                 </span>
-                <span className="text-xs leading-relaxed text-zinc-500">
+                <span className="text-xs leading-relaxed text-charcoal-500">
                   Drops this exercise from today&apos;s workout. Your plan stays
                   the same for next time.
                 </span>
@@ -201,7 +201,7 @@ export function RemoveExerciseSheet({
             <motion.div layout className="px-4 pb-8">
               <Button
                 variant="ghost"
-                className="h-12 w-full text-base font-semibold text-zinc-400"
+                className="h-12 w-full text-base font-semibold text-charcoal-400"
                 onClick={onClose}
                 disabled={removing}
               >
@@ -231,9 +231,9 @@ export function RemoveExerciseSheet({
                   initial={{ scale: 0.95, opacity: 0 }}
                   animate={{ scale: 1, opacity: 1 }}
                   exit={{ scale: 0.95, opacity: 0 }}
-                  className="relative z-10 w-full max-w-sm rounded-2xl border border-zinc-700 bg-zinc-900 p-5 shadow-xl"
+                  className="relative z-10 w-full max-w-sm rounded-2xl border border-charcoal-700 bg-charcoal-900 p-5 shadow-xl"
                 >
-                  <p className="text-center text-sm font-semibold text-zinc-100">
+                  <p className="text-center text-sm font-semibold text-charcoal-100">
                     You&apos;ve already logged {target.loggedSetCount}{" "}
                     {target.loggedSetCount === 1 ? "set" : "sets"}. Remove
                     anyway?
@@ -251,7 +251,7 @@ export function RemoveExerciseSheet({
                       Keep
                     </Button>
                     <Button
-                      className="flex-1 bg-zinc-700 hover:bg-zinc-600"
+                      className="flex-1 bg-charcoal-700 hover:bg-charcoal-600"
                       disabled={removing}
                       onClick={() => executeRemove("session")}
                     >
@@ -279,14 +279,14 @@ export function RemoveExerciseSheet({
                   initial={{ scale: 0.95, opacity: 0 }}
                   animate={{ scale: 1, opacity: 1 }}
                   exit={{ scale: 0.95, opacity: 0 }}
-                  className="relative z-10 w-full max-w-sm rounded-2xl border border-red-900/50 bg-zinc-900 p-5 shadow-xl"
+                  className="relative z-10 w-full max-w-sm rounded-2xl border border-red-900/50 bg-charcoal-900 p-5 shadow-xl"
                 >
                   <p className="text-center text-sm font-semibold leading-relaxed text-red-100">
                     This will remove {target.exerciseName} from{" "}
                     {planName ?? "this plan"} permanently. This cannot be undone.
                   </p>
                   {target.loggedSetCount > 0 && (
-                    <p className="mt-2 text-center text-xs text-zinc-500">
+                    <p className="mt-2 text-center text-xs text-charcoal-500">
                       {target.loggedSetCount} logged{" "}
                       {target.loggedSetCount === 1 ? "set" : "sets"} will be
                       deleted too.

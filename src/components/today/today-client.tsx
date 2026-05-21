@@ -102,7 +102,7 @@ export function TodayClient({
   if (!initialToday) {
     return (
       <Card>
-        <p className="text-zinc-400">No active program. Check your database seed.</p>
+        <p className="text-charcoal-400">No active program. Check your database seed.</p>
       </Card>
     );
   }
@@ -111,7 +111,7 @@ export function TodayClient({
     return (
       <div className="space-y-4">
         <StreakCard />
-        <Card className="relative overflow-hidden border-teal-500/30 bg-gradient-to-b from-teal-500/10 to-zinc-900 py-12 text-center">
+        <Card className="relative overflow-hidden border-teal-500/30 bg-gradient-to-b from-teal-500/10 to-charcoal-900 py-12 text-center">
           <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(20,184,166,0.15),transparent_60%)]" />
           <span className="text-6xl">🛋️</span>
           <h2 className="mt-4 text-2xl font-extrabold tracking-tight text-teal-100">
@@ -120,10 +120,10 @@ export function TodayClient({
           <p className="mt-2 text-sm font-medium text-teal-200/80">
             You earned it
           </p>
-          <p className="mx-auto mt-6 max-w-xs text-sm italic text-zinc-400">
+          <p className="mx-auto mt-6 max-w-xs text-sm italic text-charcoal-400">
             &ldquo;{restQuote}&rdquo;
           </p>
-          <p className="mt-4 text-xs text-zinc-500">
+          <p className="mt-4 text-xs text-charcoal-500">
             {initialToday.programDay.label ?? "Active Recovery"}
           </p>
         </Card>
@@ -148,7 +148,7 @@ export function TodayClient({
       )}
 
       {initialToday.rotationCount > 0 && (
-        <div className="rounded-xl border border-zinc-700/80 bg-zinc-900/80 px-4 py-2 text-center text-xs font-medium text-zinc-400">
+        <div className="rounded-xl border border-charcoal-700/80 bg-charcoal-900/80 px-4 py-2 text-center text-xs font-medium text-charcoal-400">
           Week {initialToday.userProgram.currentWeek} — {initialToday.rotationCount}{" "}
           exercise{initialToday.rotationCount > 1 ? "s" : ""} updated
         </div>
@@ -168,21 +168,21 @@ export function TodayClient({
             : `Today's workout · Week ${initialToday.userProgram.currentWeek} · Day ${initialToday.userProgram.nextDayNumber}`}
         </SectionLabel>
         {completedToday && (
-          <p className="mt-1 text-xs font-semibold text-emerald-400">Completed ✓</p>
+          <p className="mt-1 text-xs font-semibold text-proof-400">Completed ✓</p>
         )}
         {!completedToday && (
-          <p className="mt-2 text-xs text-zinc-500">{todayLabel}</p>
+          <p className="mt-2 text-xs text-charcoal-500">{todayLabel}</p>
         )}
         <div className="mt-3 flex items-start gap-2">
           <span className="text-3xl">{theme.emoji}</span>
           <div>
-            <h2 className="text-3xl font-extrabold tracking-tight text-zinc-50">
+            <h2 className="text-3xl font-extrabold tracking-tight text-charcoal-50">
               {initialToday.plan.name}
             </h2>
             <p
               className={cn(
                 "mt-1 text-sm font-medium",
-                completedToday ? "text-zinc-400" : "text-emerald-400/90"
+                completedToday ? "text-charcoal-400" : "text-proof-400/90"
               )}
             >
               {completedToday
@@ -192,17 +192,17 @@ export function TodayClient({
           </div>
         </div>
         {initialToday.plan.description && (
-          <p className="mt-3 text-sm leading-relaxed text-zinc-400">
+          <p className="mt-3 text-sm leading-relaxed text-charcoal-400">
             {initialToday.plan.description}
           </p>
         )}
-        <p className="mt-4 text-sm font-semibold text-zinc-300">
-          <span className="text-2xl font-black text-zinc-50">
+        <p className="mt-4 text-sm font-semibold text-charcoal-300">
+          <span className="text-2xl font-black text-charcoal-50">
             {initialToday.exercises.length}
           </span>{" "}
-          <span className="text-zinc-500">exercises</span>
+          <span className="text-charcoal-500">exercises</span>
         </p>
-        <ul className="mt-4 max-h-52 space-y-2 overflow-y-auto overscroll-contain border-t border-zinc-800/80 pt-4 pr-1">
+        <ul className="mt-4 max-h-52 space-y-2 overflow-y-auto overscroll-contain border-t border-charcoal-800/80 pt-4 pr-1">
           {initialToday.exercises.map((e, i) => {
             const preview = previewByExerciseId.get(e.exercise.id);
             const setLabel = preview
@@ -214,13 +214,13 @@ export function TodayClient({
                 : null;
             return (
               <li key={i} className="flex justify-between gap-3 text-sm">
-                <span className="min-w-0 break-words text-zinc-200">
+                <span className="min-w-0 break-words text-charcoal-200">
                   {e.exercise.name}
                 </span>
-                <span className="shrink-0 text-right font-bold tabular-nums text-zinc-500">
+                <span className="shrink-0 text-right font-bold tabular-nums text-charcoal-500">
                   {setLabel}
                   {weightLabel && (
-                    <span className="block text-[11px] font-semibold text-zinc-600">
+                    <span className="block text-[11px] font-semibold text-charcoal-600">
                       @ {weightLabel}
                     </span>
                   )}
@@ -255,7 +255,7 @@ export function TodayClient({
               type="button"
               onClick={startAnotherToday}
               disabled={loading}
-              className="mx-auto block text-sm font-medium text-zinc-500 underline-offset-2 transition hover:text-emerald-400 hover:underline disabled:opacity-50"
+              className="mx-auto block text-sm font-medium text-charcoal-500 underline-offset-2 transition hover:text-proof-400 hover:underline disabled:opacity-50"
             >
               {activeSessionId && !activeIsPreview
                 ? "Resume today&apos;s workout"
@@ -265,8 +265,8 @@ export function TodayClient({
         ) : (
           <Button
             className={cn(
-              "h-16 w-full text-lg font-extrabold shadow-lg shadow-emerald-600/30",
-              "bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-400 hover:to-emerald-500"
+              "h-16 w-full text-lg font-extrabold shadow-lg shadow-proof-600/30",
+              "bg-gradient-to-r from-proof-500 to-proof-600 hover:from-proof-400 hover:to-proof-500"
             )}
             size="lg"
             onClick={startWorkout}

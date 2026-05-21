@@ -24,9 +24,9 @@ export const MUSCLE_DOT: Record<string, string> = {
   Shoulders: "bg-violet-400",
   Biceps: "bg-pink-400",
   Triceps: "bg-orange-400",
-  Forearms: "bg-zinc-400",
+  Forearms: "bg-charcoal-400",
   Traps: "bg-slate-400",
-  Quads: "bg-emerald-400",
+  Quads: "bg-proof-400",
   Hamstrings: "bg-lime-400",
   Glutes: "bg-fuchsia-400",
   Calves: "bg-cyan-400",
@@ -35,7 +35,7 @@ export const MUSCLE_DOT: Record<string, string> = {
   Abs: "bg-amber-400",
   Obliques: "bg-yellow-400",
   "Lower Back": "bg-orange-300",
-  "Full Body": "bg-zinc-300",
+  "Full Body": "bg-charcoal-300",
 };
 
 export function sortMuscleGroupNames(names: string[]): string[] {

@@ -45,10 +45,7 @@ export async function getSession() {
       and(eq(authSessions.id, sessionId), gt(authSessions.expiresAt, new Date()))
     )
     .limit(1);
-  if (!result[0]) {
-    cookieStore.delete(COOKIE_NAME);
-    return null;
-  }
+  if (!result[0]) return null;
   return result[0];
 }
 

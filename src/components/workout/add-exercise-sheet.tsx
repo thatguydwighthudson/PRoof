@@ -41,7 +41,7 @@ function ExercisePickerCard({
   const youtubeUrl = youtubeSearchUrl(ex.youtubeQuery);
 
   return (
-    <motion.div layout className="flex items-center gap-2 rounded-2xl border border-zinc-800 bg-zinc-900/80 px-3 py-3">
+    <motion.div layout className="flex items-center gap-2 rounded-2xl border border-charcoal-800 bg-charcoal-900/80 px-3 py-3">
       <a
         href={youtubeUrl}
         target="_blank"
@@ -54,8 +54,8 @@ function ExercisePickerCard({
       </a>
 
       <motion.div layout className="min-w-0 flex-1">
-        <p className="truncate font-bold text-zinc-100">{ex.name}</p>
-        <p className="mt-0.5 truncate text-xs text-zinc-500">
+        <p className="truncate font-bold text-charcoal-100">{ex.name}</p>
+        <p className="mt-0.5 truncate text-xs text-charcoal-500">
           {[ex.muscleGroupName, ex.equipment].filter(Boolean).join(" · ") ||
             "—"}
         </p>
@@ -72,8 +72,8 @@ function ExercisePickerCard({
         className={cn(
           "shrink-0 rounded-xl px-3 py-2 text-xs font-bold transition-colors",
           added
-            ? "bg-zinc-800 text-zinc-500"
-            : "bg-emerald-600 text-white hover:bg-emerald-500 disabled:opacity-60"
+            ? "bg-charcoal-800 text-charcoal-500"
+            : "bg-proof-600 text-white hover:bg-proof-500 disabled:opacity-60"
         )}
       >
         {added ? "✓ Added" : adding ? "…" : "+ Add"}
@@ -263,19 +263,19 @@ export function AddExerciseSheet({
             animate={{ y: 0 }}
             exit={{ y: "100%" }}
             transition={{ type: "spring", damping: 28, stiffness: 320 }}
-            className="relative z-10 flex max-h-[88vh] w-full flex-col rounded-t-3xl border-t border-zinc-700 bg-zinc-950 shadow-2xl"
+            className="relative z-10 flex max-h-[88vh] w-full flex-col rounded-t-3xl border-t border-charcoal-700 bg-charcoal-950 shadow-2xl"
           >
             <motion.div
-              className="mx-auto mt-2 h-1 w-10 shrink-0 rounded-full bg-zinc-600"
+              className="mx-auto mt-2 h-1 w-10 shrink-0 rounded-full bg-charcoal-600"
               aria-hidden
             />
 
             <motion.div layout className="flex items-center justify-between px-4 pt-3 pb-2">
-              <h2 className="text-lg font-extrabold text-zinc-50">Add Exercise</h2>
+              <h2 className="text-lg font-extrabold text-charcoal-50">Add Exercise</h2>
               <button
                 type="button"
                 onClick={onClose}
-                className="flex h-9 w-9 items-center justify-center rounded-full bg-zinc-800 text-zinc-300 hover:bg-zinc-700"
+                className="flex h-9 w-9 items-center justify-center rounded-full bg-charcoal-800 text-charcoal-300 hover:bg-charcoal-700"
                 aria-label="Close"
               >
                 <X className="h-5 w-5" />
@@ -293,7 +293,7 @@ export function AddExerciseSheet({
               <SectionLabel className="mb-2">Suggestions for you 💡</SectionLabel>
               <div className="space-y-2">
                 {suggestions.length === 0 ? (
-                  <p className="py-4 text-center text-sm text-zinc-500">
+                  <p className="py-4 text-center text-sm text-charcoal-500">
                     {planId == null
                       ? "No plan linked to this session"
                       : "No suggestions right now"}
@@ -313,13 +313,13 @@ export function AddExerciseSheet({
 
               <SectionLabel className="mb-2 mt-6">Full Library 📚</SectionLabel>
               <motion.div layout className="relative mb-3">
-                <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-500" />
+                <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-charcoal-500" />
                 <Input
                   ref={searchRef}
                   placeholder="Search name or muscle group"
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
-                  className="border-zinc-700 bg-zinc-900 pl-9"
+                  className="border-charcoal-700 bg-charcoal-900 pl-9"
                 />
               </motion.div>
 
@@ -357,12 +357,12 @@ export function AddExerciseSheet({
                   initial={{ y: 40, opacity: 0 }}
                   animate={{ y: 0, opacity: 1 }}
                   exit={{ y: 40, opacity: 0 }}
-                  className="relative z-10 w-full max-w-sm rounded-t-3xl border border-zinc-700 bg-zinc-900 p-5 shadow-xl sm:rounded-3xl"
+                  className="relative z-10 w-full max-w-sm rounded-t-3xl border border-charcoal-700 bg-charcoal-900 p-5 shadow-xl sm:rounded-3xl"
                 >
-                  <h3 className="text-center text-lg font-extrabold text-zinc-50">
+                  <h3 className="text-center text-lg font-extrabold text-charcoal-50">
                     Add {pendingAdd.exerciseName}?
                   </h3>
-                  <p className="mt-1 text-center text-xs text-zinc-500">
+                  <p className="mt-1 text-center text-xs text-charcoal-500">
                     Choose where this exercise should live
                   </p>
                   <motion.div layout className="mt-4 space-y-3">
@@ -372,14 +372,14 @@ export function AddExerciseSheet({
                       onClick={chooseSession}
                       className={cn(
                         "flex w-full flex-col items-start gap-2 rounded-2xl border px-4 py-4 text-left transition-colors",
-                        "border-zinc-700/80 bg-zinc-900/60 hover:border-zinc-600"
+                        "border-charcoal-700/80 bg-charcoal-900/60 hover:border-charcoal-600"
                       )}
                     >
-                      <span className="flex items-center gap-2 text-sm font-bold text-zinc-200">
-                        <Calendar className="h-5 w-5 text-zinc-400" />
+                      <span className="flex items-center gap-2 text-sm font-bold text-charcoal-200">
+                        <Calendar className="h-5 w-5 text-charcoal-400" />
                         This session only
                       </span>
-                      <span className="text-xs text-zinc-500">
+                      <span className="text-xs text-charcoal-500">
                         Today&apos;s workout only — plan stays the same.
                       </span>
                     </button>
@@ -389,21 +389,21 @@ export function AddExerciseSheet({
                       onClick={choosePlan}
                       className={cn(
                         "flex w-full flex-col items-start gap-2 rounded-2xl border px-4 py-4 text-left transition-colors",
-                        "border-emerald-900/50 bg-emerald-950/30 hover:border-emerald-700/60"
+                        "border-proof-900/50 bg-proof-950/30 hover:border-proof-700/60"
                       )}
                     >
-                      <span className="flex items-center gap-2 text-sm font-bold text-emerald-200">
-                        <BookmarkPlus className="h-5 w-5 text-emerald-400" />
+                      <span className="flex items-center gap-2 text-sm font-bold text-proof-200">
+                        <BookmarkPlus className="h-5 w-5 text-proof-400" />
                         Add to plan permanently
                       </span>
-                      <span className="text-xs text-emerald-300/70">
+                      <span className="text-xs text-proof-300/70">
                         Stays on {planName ?? "this plan"} for all future workouts.
                       </span>
                     </button>
                   </motion.div>
                   <Button
                     variant="ghost"
-                    className="mt-3 h-12 w-full text-zinc-400"
+                    className="mt-3 h-12 w-full text-charcoal-400"
                     onClick={() => setPendingAdd(null)}
                   >
                     Cancel
@@ -429,9 +429,9 @@ export function AddExerciseSheet({
                   initial={{ scale: 0.95, opacity: 0 }}
                   animate={{ scale: 1, opacity: 1 }}
                   exit={{ scale: 0.95, opacity: 0 }}
-                  className="relative z-10 w-full max-w-sm rounded-2xl border border-emerald-900/50 bg-zinc-900 p-5 shadow-xl"
+                  className="relative z-10 w-full max-w-sm rounded-2xl border border-proof-900/50 bg-charcoal-900 p-5 shadow-xl"
                 >
-                  <p className="text-center text-sm font-semibold leading-relaxed text-emerald-100">
+                  <p className="text-center text-sm font-semibold leading-relaxed text-proof-100">
                     Add {pendingAdd.exerciseName} to {planName ?? "this plan"}{" "}
                     permanently? It will appear on every future day with this plan.
                   </p>

@@ -10,10 +10,10 @@ export type PlanTheme = {
 
 const DEFAULT: PlanTheme = {
   emoji: "🏋️",
-  border: "border-l-zinc-500",
-  accent: "text-zinc-300",
-  badge: "bg-zinc-500/20 text-zinc-300",
-  glow: "shadow-zinc-500/10",
+  border: "border-l-charcoal-500",
+  accent: "text-charcoal-300",
+  badge: "bg-charcoal-500/20 text-charcoal-300",
+  glow: "shadow-charcoal-500/10",
 };
 
 export function getPlanTheme(planName: string): PlanTheme {
@@ -39,10 +39,10 @@ export function getPlanTheme(planName: string): PlanTheme {
   if (n.includes("leg")) {
     return {
       emoji: "🟢",
-      border: "border-l-emerald-500",
-      accent: "text-emerald-400",
-      badge: "bg-emerald-500/15 text-emerald-300",
-      glow: "shadow-emerald-500/20",
+      border: "border-l-green-500",
+      accent: "text-green-400",
+      badge: "bg-green-500/15 text-green-300",
+      glow: "shadow-green-500/20",
     };
   }
   if (n.includes("recovery") || n.includes("rest") || n.includes("active")) {

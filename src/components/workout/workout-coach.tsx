@@ -63,17 +63,17 @@ export function WorkoutCoach({
       initial={{ y: "100%" }}
       animate={{ y: 0 }}
       exit={{ y: "100%" }}
-      className="fixed inset-0 z-50 flex flex-col bg-zinc-950 pt-[max(1rem,env(safe-area-inset-top))]"
+      className="fixed inset-0 z-50 flex flex-col bg-charcoal-950 pt-[max(1rem,env(safe-area-inset-top))]"
     >
-      <div className="flex items-center justify-between border-b border-zinc-800 px-4 py-4">
+      <div className="flex items-center justify-between border-b border-charcoal-800 px-4 py-4">
         <div>
           <h2 className="text-lg font-extrabold">🤖 Ask your coach</h2>
-          <p className="text-xs text-zinc-500">{exercise.exercise.name}</p>
+          <p className="text-xs text-charcoal-500">{exercise.exercise.name}</p>
         </div>
         <button
           type="button"
           onClick={onClose}
-          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-zinc-800 text-zinc-300 hover:bg-zinc-700"
+          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-charcoal-800 text-charcoal-300 hover:bg-charcoal-700"
           aria-label="Close"
         >
           <X className="h-6 w-6" />
@@ -81,9 +81,9 @@ export function WorkoutCoach({
       </div>
       <div className="flex-1 space-y-3 overflow-y-auto p-4">
         {messages.length === 0 && (
-          <p className="rounded-2xl bg-zinc-900 p-4 text-sm text-zinc-400">
+          <p className="rounded-2xl bg-charcoal-900 p-4 text-sm text-charcoal-400">
             Form, cues, pacing — ask anything about{" "}
-            <strong className="text-zinc-200">{exercise.exercise.name}</strong>.
+            <strong className="text-charcoal-200">{exercise.exercise.name}</strong>.
           </p>
         )}
         {messages.map((m, i) => (
@@ -93,20 +93,20 @@ export function WorkoutCoach({
             animate={{ opacity: 1, y: 0 }}
             className={
               m.role === "user"
-                ? "ml-6 rounded-2xl border border-emerald-500/30 bg-emerald-600/20 p-3 text-sm"
-                : "mr-6 rounded-2xl bg-zinc-800 p-3 text-sm"
+                ? "ml-6 rounded-2xl border border-proof-500/30 bg-proof-600/20 p-3 text-sm"
+                : "mr-6 rounded-2xl bg-charcoal-800 p-3 text-sm"
             }
           >
             {m.content}
           </motion.div>
         ))}
       </div>
-      <div className="flex gap-2 border-t border-zinc-800 p-4">
+      <div className="flex gap-2 border-t border-charcoal-800 p-4">
         <Input
           value={input}
           onChange={(e) => setInput(e.target.value)}
           placeholder="Ask your coach…"
-          className="border-zinc-700 bg-zinc-900"
+          className="border-charcoal-700 bg-charcoal-900"
           onKeyDown={(e) => e.key === "Enter" && send()}
         />
         <Button onClick={send} disabled={loading}>

@@ -38,12 +38,12 @@ export default function ChatPage() {
       <h1 className="mb-1 text-3xl font-extrabold tracking-tight">
         AI Coach 🤖
       </h1>
-      <p className="mb-4 text-sm text-zinc-500">Training · nutrition · recovery</p>
+      <p className="mb-4 text-sm text-charcoal-500">Training · nutrition · recovery</p>
       <div className="flex-1 space-y-3 overflow-y-auto pb-4">
         {messages.length === 0 && (
-          <Card className="border-emerald-500/20 bg-gradient-to-br from-emerald-500/10 to-zinc-900">
+          <Card className="border-proof-500/20 bg-gradient-to-br from-proof-500/10 to-charcoal-900">
             <span className="text-3xl">🤖</span>
-            <p className="mt-2 text-sm leading-relaxed text-zinc-300">
+            <p className="mt-2 text-sm leading-relaxed text-charcoal-300">
               Ask about training, nutrition, recovery, or programming. I&apos;m
               in your corner.
             </p>
@@ -56,18 +56,18 @@ export default function ChatPage() {
             animate={{ opacity: 1, y: 0 }}
             className={
               m.role === "user"
-                ? "ml-8 rounded-2xl border border-emerald-500/30 bg-emerald-600/20 p-4 text-sm"
-                : "mr-8 rounded-2xl border border-zinc-700 bg-zinc-900 p-4 text-sm"
+                ? "ml-8 rounded-2xl border border-proof-500/30 bg-proof-600/20 p-4 text-sm"
+                : "mr-8 rounded-2xl border border-charcoal-700 bg-charcoal-900 p-4 text-sm"
             }
           >
-            <span className="mb-1 block text-[10px] font-bold uppercase tracking-wider text-zinc-500">
+            <span className="mb-1 block text-[10px] font-bold uppercase tracking-wider text-charcoal-500">
               {m.role === "user" ? "You" : "Coach 🤖"}
             </span>
             {m.content}
           </motion.div>
         ))}
         {loading && (
-          <p className="text-center text-sm text-zinc-500 animate-pulse">
+          <p className="text-center text-sm text-charcoal-500 animate-pulse">
             Coach is thinking…
           </p>
         )}
@@ -77,7 +77,7 @@ export default function ChatPage() {
           value={input}
           onChange={(e) => setInput(e.target.value)}
           placeholder="Ask your coach…"
-          className="border-zinc-700 bg-zinc-900"
+          className="border-charcoal-700 bg-charcoal-900"
           onKeyDown={(e) => e.key === "Enter" && send()}
         />
         <Button onClick={send} disabled={loading} className="shrink-0">

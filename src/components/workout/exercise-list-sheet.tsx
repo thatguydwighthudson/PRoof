@@ -35,13 +35,13 @@ function statusMeta(
   if (index === currentIndex) {
     return {
       label: "Now",
-      className: "bg-emerald-500/20 text-emerald-300",
+      className: "bg-proof-500/20 text-proof-300",
     };
   }
   if (progress === "done") {
     return {
       label: "Done",
-      className: "bg-emerald-950/80 text-emerald-400/90",
+      className: "bg-proof-950/80 text-proof-400/90",
     };
   }
   if (progress === "partial") {
@@ -52,7 +52,7 @@ function statusMeta(
   }
   return {
     label: "Upcoming",
-    className: "bg-zinc-800 text-zinc-500",
+    className: "bg-charcoal-800 text-charcoal-500",
   };
 }
 
@@ -118,26 +118,26 @@ export function ExerciseListSheet({
             animate={{ y: 0 }}
             exit={{ y: "100%" }}
             transition={{ type: "spring", damping: 28, stiffness: 320 }}
-            className="relative z-10 flex max-h-[min(85vh,640px)] w-full flex-col rounded-t-3xl border-t border-zinc-700 bg-zinc-950 shadow-2xl"
+            className="relative z-10 flex max-h-[min(85vh,640px)] w-full flex-col rounded-t-3xl border-t border-charcoal-700 bg-charcoal-950 shadow-2xl"
           >
             <div
-              className="mx-auto mt-2 h-1 w-10 shrink-0 rounded-full bg-zinc-600"
+              className="mx-auto mt-2 h-1 w-10 shrink-0 rounded-full bg-charcoal-600"
               aria-hidden
             />
 
             <div className="flex items-center justify-between px-4 pt-3 pb-2">
               <div>
-                <h2 className="text-lg font-extrabold text-zinc-50">
+                <h2 className="text-lg font-extrabold text-charcoal-50">
                   All exercises
                 </h2>
-                <p className="text-xs text-zinc-500">
+                <p className="text-xs text-charcoal-500">
                   {exercises.length} in this session
                 </p>
               </div>
               <button
                 type="button"
                 onClick={onClose}
-                className="rounded-xl p-2 text-zinc-500 hover:bg-zinc-800"
+                className="rounded-xl p-2 text-charcoal-500 hover:bg-charcoal-800"
                 aria-label="Close"
               >
                 <X className="h-5 w-5" />
@@ -156,10 +156,10 @@ export function ExerciseListSheet({
                     <li
                       key={ex.id}
                       className={cn(
-                        "rounded-2xl border bg-zinc-900/80 p-3",
+                        "rounded-2xl border bg-charcoal-900/80 p-3",
                         i === currentIndex
-                          ? "border-emerald-500/40"
-                          : "border-zinc-800"
+                          ? "border-proof-500/40"
+                          : "border-charcoal-800"
                       )}
                     >
                       <div className="flex items-start gap-2">
@@ -186,12 +186,12 @@ export function ExerciseListSheet({
                               </span>
                             )}
                             {ex.isUserAdded && (
-                              <span className="text-[10px] font-medium text-zinc-500">
+                              <span className="text-[10px] font-medium text-charcoal-500">
                                 + you
                               </span>
                             )}
                           </div>
-                          <p className="mt-1 font-bold text-zinc-100">
+                          <p className="mt-1 font-bold text-charcoal-100">
                             {ex.exercise.name}
                           </p>
                         </button>
@@ -200,7 +200,7 @@ export function ExerciseListSheet({
                             type="button"
                             disabled={!canMoveUp}
                             onClick={() => onMove(i, -1)}
-                            className="rounded-lg border border-zinc-800 p-1.5 text-zinc-500 hover:bg-zinc-800 disabled:opacity-30"
+                            className="rounded-lg border border-charcoal-800 p-1.5 text-charcoal-500 hover:bg-charcoal-800 disabled:opacity-30"
                             aria-label="Move up"
                           >
                             <ArrowUp className="h-3.5 w-3.5" />
@@ -209,7 +209,7 @@ export function ExerciseListSheet({
                             type="button"
                             disabled={!canMoveDown}
                             onClick={() => onMove(i, 1)}
-                            className="rounded-lg border border-zinc-800 p-1.5 text-zinc-500 hover:bg-zinc-800 disabled:opacity-30"
+                            className="rounded-lg border border-charcoal-800 p-1.5 text-charcoal-500 hover:bg-charcoal-800 disabled:opacity-30"
                             aria-label="Move down"
                           >
                             <ArrowDown className="h-3.5 w-3.5" />
@@ -234,7 +234,7 @@ export function ExerciseListSheet({
                         <button
                           type="button"
                           onClick={() => onRemove(i)}
-                          className="flex h-8 items-center justify-center gap-1 rounded-xl border border-zinc-800 px-3 text-xs font-semibold text-zinc-500 hover:border-red-900/50 hover:bg-red-950/30 hover:text-red-400"
+                          className="flex h-8 items-center justify-center gap-1 rounded-xl border border-charcoal-800 px-3 text-xs font-semibold text-charcoal-500 hover:border-red-900/50 hover:bg-red-950/30 hover:text-red-400"
                         >
                           <Trash2 className="h-3 w-3" />
                           Remove
@@ -246,10 +246,10 @@ export function ExerciseListSheet({
               </ul>
             </div>
 
-            <div className="border-t border-zinc-800 px-4 py-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
+            <div className="border-t border-charcoal-800 px-4 py-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
               <Button
                 variant="outline"
-                className="h-12 w-full border-dashed border-emerald-600/50 bg-emerald-950/20 text-base font-bold text-emerald-300"
+                className="h-12 w-full border-dashed border-proof-600/50 bg-proof-950/20 text-base font-bold text-proof-300"
                 onClick={() => {
                   onAddExercise();
                   onClose();

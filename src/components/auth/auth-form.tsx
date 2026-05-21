@@ -44,7 +44,7 @@ export function SignInForm({
   return (
     <form action={formAction} className="space-y-4">
       <div>
-        <label htmlFor="email" className="text-xs font-bold uppercase tracking-wider text-zinc-500">
+        <label htmlFor="email" className="text-xs font-bold uppercase tracking-wider text-charcoal-500">
           Email
         </label>
         <Input
@@ -58,7 +58,7 @@ export function SignInForm({
         <FieldError message={state.errors?.email} />
       </div>
       <div>
-        <label htmlFor="password" className="text-xs font-bold uppercase tracking-wider text-zinc-500">
+        <label htmlFor="password" className="text-xs font-bold uppercase tracking-wider text-charcoal-500">
           Password
         </label>
         <PasswordInput
@@ -72,9 +72,9 @@ export function SignInForm({
       <Button type="submit" className="w-full" disabled={pending}>
         {pending ? "Signing in…" : "Sign in"}
       </Button>
-      <p className="text-center text-sm text-zinc-500">
+      <p className="text-center text-sm text-charcoal-500">
         No account?{" "}
-        <Link href="/signup" className="font-semibold text-emerald-400">
+        <Link href="/signup" className="font-semibold text-proof-400">
           Sign up
         </Link>
       </p>
@@ -95,14 +95,14 @@ export function SignUpForm({
   return (
     <form action={formAction} className="space-y-4">
       <div>
-        <label htmlFor="name" className="text-xs font-bold uppercase tracking-wider text-zinc-500">
+        <label htmlFor="name" className="text-xs font-bold uppercase tracking-wider text-charcoal-500">
           Name
         </label>
         <Input id="name" name="name" required autoComplete="name" className="mt-1" />
         <FieldError message={state.errors?.name} />
       </div>
       <div>
-        <label htmlFor="email" className="text-xs font-bold uppercase tracking-wider text-zinc-500">
+        <label htmlFor="email" className="text-xs font-bold uppercase tracking-wider text-charcoal-500">
           Email
         </label>
         <Input
@@ -116,7 +116,7 @@ export function SignUpForm({
         <FieldError message={state.errors?.email} />
       </div>
       <div>
-        <label htmlFor="password" className="text-xs font-bold uppercase tracking-wider text-zinc-500">
+        <label htmlFor="password" className="text-xs font-bold uppercase tracking-wider text-charcoal-500">
           Password
         </label>
         <PasswordInput
@@ -129,7 +129,7 @@ export function SignUpForm({
         <FieldError message={state.errors?.password} />
       </div>
       <fieldset>
-        <legend className="text-xs font-bold uppercase tracking-wider text-zinc-500">
+        <legend className="text-xs font-bold uppercase tracking-wider text-charcoal-500">
           Training level
         </legend>
         <div className="mt-2 space-y-2">
@@ -137,7 +137,7 @@ export function SignUpForm({
             <label
               key={level.value}
               className={cn(
-                "flex cursor-pointer gap-3 rounded-xl border border-zinc-800 bg-zinc-900/60 p-3 has-[:checked]:border-emerald-600/60 has-[:checked]:bg-emerald-950/30"
+                "flex cursor-pointer gap-3 rounded-xl border border-charcoal-800 bg-charcoal-900/60 p-3 has-[:checked]:border-proof-600/60 has-[:checked]:bg-proof-950/30"
               )}
             >
               <input
@@ -145,11 +145,11 @@ export function SignUpForm({
                 name="training_level"
                 value={level.value}
                 defaultChecked={level.value === "beginner"}
-                className="mt-1 accent-emerald-500"
+                className="mt-1 accent-proof-500"
               />
               <span>
                 <span className="block text-sm font-bold">{level.label}</span>
-                <span className="block text-xs text-zinc-500">{level.hint}</span>
+                <span className="block text-xs text-charcoal-500">{level.hint}</span>
               </span>
             </label>
           ))}
@@ -159,9 +159,9 @@ export function SignUpForm({
       <Button type="submit" className="w-full" disabled={pending}>
         {pending ? "Creating account…" : "Create account"}
       </Button>
-      <p className="text-center text-sm text-zinc-500">
+      <p className="text-center text-sm text-charcoal-500">
         Already have an account?{" "}
-        <Link href="/signin" className="font-semibold text-emerald-400">
+        <Link href="/signin" className="font-semibold text-proof-400">
           Sign in
         </Link>
       </p>

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { X } from "lucide-react";
+import { AppLogo } from "@/components/brand/app-logo";
 import { Button } from "@/components/ui/button";
 
 const SESSION_KEY = "proof-install-banner-seen";
@@ -52,20 +53,21 @@ export function InstallPrompt() {
     <div
       role="region"
       aria-label="Install PRoof"
-      className="sticky top-0 z-50 -mx-4 border-b border-emerald-500/20 bg-zinc-950/95 px-4 py-3 backdrop-blur-xl"
+      className="sticky top-0 z-50 -mx-4 border-b border-proof-500/20 bg-charcoal-950/95 px-4 py-3 backdrop-blur-xl"
       style={{ paddingTop: "max(0.75rem, env(safe-area-inset-top))" }}
     >
       <div className="flex items-start gap-3">
+        <AppLogo height={36} className="shrink-0" />
         <div className="min-w-0 flex-1">
-          <p className="text-sm font-semibold text-zinc-100">Install PRoof</p>
-          <p className="mt-0.5 text-xs text-zinc-500">
+          <p className="text-sm font-semibold text-charcoal-100">Install PRoof</p>
+          <p className="mt-0.5 text-xs text-charcoal-500">
             Add to your home screen for the full app experience.
           </p>
         </div>
         <button
           type="button"
           onClick={dismiss}
-          className="shrink-0 rounded-lg p-1 text-zinc-500 hover:bg-zinc-800 hover:text-zinc-300"
+          className="shrink-0 rounded-lg p-1 text-charcoal-500 hover:bg-charcoal-800 hover:text-charcoal-300"
           aria-label="Dismiss install banner"
         >
           <X className="h-4 w-4" />

@@ -21,7 +21,7 @@ export function BottomNav() {
   if (hide) return null;
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-40 border-t border-zinc-800/80 bg-zinc-950/95 pb-[env(safe-area-inset-bottom)] backdrop-blur-xl">
+    <nav className="fixed bottom-0 left-0 right-0 z-40 border-t border-charcoal-800/80 bg-charcoal-950/95 pb-[env(safe-area-inset-bottom)] backdrop-blur-xl">
       <div className="mx-auto flex max-w-lg items-stretch justify-around">
         {links.map(({ href, label, emoji }) => {
           const active = pathname === href || pathname.startsWith(`${href}/`);
@@ -31,11 +31,11 @@ export function BottomNav() {
               href={href}
               className={cn(
                 "relative flex min-h-[58px] flex-1 flex-col items-center justify-center gap-0.5 text-[10px] font-semibold transition-colors",
-                active ? "text-emerald-400" : "text-zinc-500"
+                active ? "text-proof-400" : "text-charcoal-500"
               )}
             >
               {active && (
-                <span className="absolute top-1 h-1 w-8 rounded-full bg-emerald-500" />
+                <span className="absolute top-1 h-1 w-8 rounded-full bg-proof-500" />
               )}
               <span className="text-xl leading-none">{emoji}</span>
               <span>{label}</span>

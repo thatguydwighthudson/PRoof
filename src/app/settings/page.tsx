@@ -70,7 +70,7 @@ export default function SettingsPage() {
     <div className="bg-mesh min-h-screen px-4 pt-6">
       <Link
         href="/today"
-        className="mb-4 inline-flex items-center text-sm font-medium text-zinc-500"
+        className="mb-4 inline-flex items-center text-sm font-medium text-charcoal-500"
       >
         <ChevronLeft className="h-4 w-4" /> Back
       </Link>
@@ -87,8 +87,8 @@ export default function SettingsPage() {
               className={cn(
                 "flex-1 rounded-xl py-3 text-sm font-bold uppercase tracking-wide",
                 preferredUnit === u
-                  ? "bg-emerald-600 text-white shadow-lg shadow-emerald-600/25"
-                  : "bg-zinc-800 text-zinc-400"
+                  ? "bg-proof-600 text-white shadow-lg shadow-proof-600/25"
+                  : "bg-charcoal-800 text-charcoal-400"
               )}
             >
               {u}
@@ -105,14 +105,14 @@ export default function SettingsPage() {
             type="checkbox"
             checked={remindersOn}
             onChange={(e) => setRemindersOn(e.target.checked)}
-            className="h-5 w-5 accent-emerald-500"
+            className="h-5 w-5 accent-proof-500"
           />
         </label>
         <input
           type="time"
           value={reminderTime}
           onChange={(e) => setReminderTime(e.target.value)}
-          className="w-full rounded-xl border border-zinc-700 bg-zinc-950 px-3 py-3 font-medium"
+          className="w-full rounded-xl border border-charcoal-700 bg-charcoal-950 px-3 py-3 font-medium"
         />
         <Button className="mt-3 w-full" variant="secondary" onClick={saveReminders}>
           Save reminders
@@ -124,7 +124,7 @@ export default function SettingsPage() {
 
       <Card>
         <SectionLabel>Export</SectionLabel>
-        <p className="mt-2 mb-3 text-xs text-zinc-500">Download your training data</p>
+        <p className="mt-2 mb-3 text-xs text-charcoal-500">Download your training data</p>
         <Button
           variant="secondary"
           className="mb-2 w-full font-bold"
@@ -142,7 +142,7 @@ export default function SettingsPage() {
       <Link href="/body" className="mt-4 block">
         <Button
           variant="outline"
-          className="h-14 w-full border-zinc-700 text-base font-bold"
+          className="h-14 w-full border-charcoal-700 text-base font-bold"
         >
           ⚖️ Weekly Check-In
         </Button>

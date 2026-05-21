@@ -4,7 +4,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 export function StreakCardSkeleton() {
   return (
     <div className="mb-4 grid grid-cols-2 gap-3">
-      <div className="col-span-1 rounded-2xl p-4 ring-1 ring-zinc-800">
+      <div className="col-span-1 rounded-2xl p-4 ring-1 ring-charcoal-800">
         <Skeleton className="h-3 w-16" />
         <div className="mt-3 flex items-end gap-2">
           <Skeleton className="h-10 w-10 rounded-xl" />
@@ -12,7 +12,7 @@ export function StreakCardSkeleton() {
         </div>
         <Skeleton className="mt-3 h-3 w-20" />
       </div>
-      <div className="rounded-2xl p-4 ring-1 ring-zinc-800">
+      <div className="rounded-2xl p-4 ring-1 ring-charcoal-800">
         <Skeleton className="h-3 w-14" />
         <div className="mt-3 flex items-end gap-2">
           <Skeleton className="h-8 w-8 rounded-xl" />
@@ -26,7 +26,7 @@ export function StreakCardSkeleton() {
 
 export function TodayProgramCardSkeleton() {
   return (
-    <Card className="border-l-4 border-l-zinc-800 pl-5 shadow-xl">
+    <Card className="border-l-4 border-l-charcoal-800 pl-5 shadow-xl">
       <Skeleton className="h-3 w-40" />
       <Skeleton className="mt-3 h-3 w-28" />
       <div className="mt-4 flex items-start gap-2">
@@ -37,7 +37,7 @@ export function TodayProgramCardSkeleton() {
         </div>
       </div>
       <Skeleton className="mt-4 h-4 w-24" />
-      <div className="mt-4 space-y-2 border-t border-zinc-800/80 pt-4">
+      <div className="mt-4 space-y-2 border-t border-charcoal-800/80 pt-4">
         {Array.from({ length: 5 }).map((_, i) => (
           <div key={i} className="flex justify-between gap-3">
             <Skeleton className="h-4 flex-1" />

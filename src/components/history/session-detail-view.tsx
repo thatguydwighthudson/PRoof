@@ -79,9 +79,9 @@ function formatSetLine(
 
 function StatPill({ label, value }: { label: string; value: number }) {
   return (
-    <span className="rounded-lg bg-zinc-800 px-2 py-1">
-      <span className="font-bold text-zinc-200">{value}</span>{" "}
-      <span className="text-zinc-500">{label}</span>
+    <span className="rounded-lg bg-charcoal-800 px-2 py-1">
+      <span className="font-bold text-charcoal-200">{value}</span>{" "}
+      <span className="text-charcoal-500">{label}</span>
     </span>
   );
 }
@@ -105,7 +105,7 @@ function SetGroup({
 
   return (
     <div>
-      <p className="mb-1.5 text-[10px] font-bold uppercase tracking-wider text-zinc-500">
+      <p className="mb-1.5 text-[10px] font-bold uppercase tracking-wider text-charcoal-500">
         {label}
       </p>
       <ul className="space-y-1.5">
@@ -115,14 +115,14 @@ function SetGroup({
             className={cn(
               "flex items-center gap-2 rounded-lg px-2 py-1.5 text-sm",
               set.isCompleted
-                ? "bg-emerald-950/40 text-zinc-200"
-                : "bg-zinc-800/50 text-zinc-400"
+                ? "bg-proof-950/40 text-charcoal-200"
+                : "bg-charcoal-800/50 text-charcoal-400"
             )}
           >
             <span
               className={cn(
                 "flex h-6 w-6 shrink-0 items-center justify-center rounded-md text-[10px] font-black",
-                set.isWarmup ? "bg-zinc-700 text-zinc-300" : "bg-zinc-700 text-zinc-200"
+                set.isWarmup ? "bg-charcoal-700 text-charcoal-300" : "bg-charcoal-700 text-charcoal-200"
               )}
             >
               {set.isWarmup ? "W" : set.setNumber}
@@ -173,7 +173,7 @@ export function SessionDetailView({ sessionId }: { sessionId: number }) {
   if (loading) {
     return (
       <div className="bg-mesh min-h-screen px-4 pb-8 pt-6">
-        <p className="text-sm text-zinc-500">Loading session…</p>
+        <p className="text-sm text-charcoal-500">Loading session…</p>
       </div>
     );
   }
@@ -183,12 +183,12 @@ export function SessionDetailView({ sessionId }: { sessionId: number }) {
       <div className="bg-mesh min-h-screen px-4 pb-8 pt-6">
         <Link
           href="/history"
-          className="mb-4 inline-flex items-center text-sm font-medium text-zinc-500 hover:text-emerald-400"
+          className="mb-4 inline-flex items-center text-sm font-medium text-charcoal-500 hover:text-proof-400"
         >
           <ChevronLeft className="h-4 w-4" /> History
         </Link>
         <Card className="py-12 text-center">
-          <p className="text-zinc-500">Session not found.</p>
+          <p className="text-charcoal-500">Session not found.</p>
         </Card>
       </div>
     );
@@ -205,7 +205,7 @@ export function SessionDetailView({ sessionId }: { sessionId: number }) {
     <div className="bg-mesh min-h-screen px-4 pb-8 pt-6">
       <Link
         href="/history"
-        className="mb-4 inline-flex items-center text-sm font-medium text-zinc-500 hover:text-emerald-400"
+        className="mb-4 inline-flex items-center text-sm font-medium text-charcoal-500 hover:text-proof-400"
       >
         <ChevronLeft className="h-4 w-4" /> History
       </Link>
@@ -213,10 +213,10 @@ export function SessionDetailView({ sessionId }: { sessionId: number }) {
       <Card className={cn("border-l-4 pl-4", theme.border)}>
         <div className="flex items-start justify-between gap-2">
           <div>
-            <p className="text-2xl font-extrabold text-zinc-50">
+            <p className="text-2xl font-extrabold text-charcoal-50">
               {theme.emoji} {planLabel}
             </p>
-            <p className="mt-0.5 text-sm font-medium text-zinc-400">
+            <p className="mt-0.5 text-sm font-medium text-charcoal-400">
               {formatSessionDate(session.endedAt ?? session.sessionDate)}
             </p>
           </div>
@@ -227,7 +227,7 @@ export function SessionDetailView({ sessionId }: { sessionId: number }) {
               </span>
             )}
             {!session.endedAt && (
-              <span className="rounded-full bg-emerald-500/20 px-2 py-0.5 text-[10px] font-bold text-emerald-300">
+              <span className="rounded-full bg-proof-500/20 px-2 py-0.5 text-[10px] font-bold text-proof-300">
                 In progress
               </span>
             )}
@@ -240,18 +240,18 @@ export function SessionDetailView({ sessionId }: { sessionId: number }) {
             <StatPill label="min" value={session.durationMins} />
           )}
           {session.overallFeel != null && (
-            <span className="rounded-lg bg-zinc-800 px-2 py-1">
-              <span className="font-bold text-zinc-200">
+            <span className="rounded-lg bg-charcoal-800 px-2 py-1">
+              <span className="font-bold text-charcoal-200">
                 {feelEmoji(session.overallFeel)}
               </span>{" "}
-              <span className="text-zinc-500">
+              <span className="text-charcoal-500">
                 {feelLabel(session.overallFeel)}
               </span>
             </span>
           )}
         </div>
         {session.sessionNotes && (
-          <p className="mt-3 rounded-lg bg-zinc-800/60 px-3 py-2 text-sm text-zinc-300">
+          <p className="mt-3 rounded-lg bg-charcoal-800/60 px-3 py-2 text-sm text-charcoal-300">
             {session.sessionNotes}
           </p>
         )}
@@ -260,7 +260,7 @@ export function SessionDetailView({ sessionId }: { sessionId: number }) {
       <div className="mt-8 space-y-4">
         <SectionLabel>Exercises</SectionLabel>
         {session.exercises.length === 0 ? (
-          <Card className="py-8 text-center text-sm text-zinc-500">
+          <Card className="py-8 text-center text-sm text-charcoal-500">
             No exercises recorded.
           </Card>
         ) : (
@@ -275,15 +275,15 @@ export function SessionDetailView({ sessionId }: { sessionId: number }) {
             return (
               <Card key={ex.id}>
                 <div className="mb-3 flex items-start justify-between gap-2">
-                  <p className="font-extrabold text-zinc-50">{ex.exercise.name}</p>
+                  <p className="font-extrabold text-charcoal-50">{ex.exercise.name}</p>
                   {topWeight != null && !ex.exercise.isBodyweight && (
-                    <span className="shrink-0 text-xs font-bold text-emerald-400">
+                    <span className="shrink-0 text-xs font-bold text-proof-400">
                       Top {formatWeightShort(topWeight, preferredUnit)}
                     </span>
                   )}
                 </div>
                 {ex.notes && (
-                  <p className="mb-3 text-xs text-zinc-500">{ex.notes}</p>
+                  <p className="mb-3 text-xs text-charcoal-500">{ex.notes}</p>
                 )}
                 <div className="space-y-3">
                   <SetGroup

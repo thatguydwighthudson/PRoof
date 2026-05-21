@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { AppLogo } from "@/components/brand/app-logo";
 
 type Diagnostics = Record<string, unknown>;
 
@@ -51,18 +52,21 @@ export default function DebugPage() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-zinc-950 p-4 text-zinc-100">
-      <h1 className="text-xl font-bold">PRoof debug</h1>
-      <p className="mt-2 text-sm text-zinc-400">
+    <div className="min-h-screen bg-charcoal-950 p-4 text-charcoal-100">
+      <div className="flex items-center gap-3">
+        <AppLogo height={32} />
+        <h1 className="text-xl font-bold">Debug</h1>
+      </div>
+      <p className="mt-2 text-sm text-charcoal-400">
         Step: {step}. Screenshot this and share if /today still fails.
       </p>
       <Link
         href="/today"
-        className="mt-4 inline-block text-sm text-emerald-400"
+        className="mt-4 inline-block text-sm text-proof-400"
       >
         ← Try Today
       </Link>
-      <pre className="mt-4 overflow-x-auto rounded-xl bg-zinc-900 p-4 text-xs leading-relaxed text-zinc-300">
+      <pre className="mt-4 overflow-x-auto rounded-xl bg-charcoal-900 p-4 text-xs leading-relaxed text-charcoal-300">
         {info ? JSON.stringify(info, null, 2) : `Running checks… (${step})`}
       </pre>
     </div>

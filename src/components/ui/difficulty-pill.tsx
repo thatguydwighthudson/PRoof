@@ -5,13 +5,13 @@ export function difficultyPillClass(
 ): string {
   switch (difficulty) {
     case "beginner":
-      return "bg-emerald-500/20 text-emerald-300 ring-emerald-500/30";
+      return "bg-proof-500/20 text-proof-300 ring-proof-500/30";
     case "intermediate":
       return "bg-amber-500/20 text-amber-300 ring-amber-500/30";
     case "advanced":
       return "bg-red-500/20 text-red-300 ring-red-500/30";
     default:
-      return "bg-zinc-500/20 text-zinc-400 ring-zinc-500/30";
+      return "bg-charcoal-500/20 text-charcoal-400 ring-charcoal-500/30";
   }
 }
 

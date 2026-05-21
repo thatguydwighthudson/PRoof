@@ -79,7 +79,7 @@ export function StreakCard() {
           "col-span-1 rounded-2xl p-4 ring-1",
           active
             ? "bg-gradient-to-br from-orange-500/20 to-red-600/10 ring-orange-500/30"
-            : "bg-zinc-900/80 ring-zinc-800"
+            : "bg-charcoal-900/80 ring-charcoal-800"
         )}
       >
         <SectionLabel>This streak</SectionLabel>
@@ -87,17 +87,17 @@ export function StreakCard() {
           <span className="text-4xl">{active ? "🔥" : "❄️"}</span>
           <span className="text-4xl font-black tabular-nums">{count}</span>
         </div>
-        <p className="mt-1 text-xs text-zinc-500">
+        <p className="mt-1 text-xs text-charcoal-500">
           {active ? "days in a row" : "start today"}
         </p>
       </div>
-      <div className="rounded-2xl bg-zinc-900/80 p-4 ring-1 ring-zinc-800">
+      <div className="rounded-2xl bg-charcoal-900/80 p-4 ring-1 ring-charcoal-800">
         <SectionLabel>This week</SectionLabel>
         <div className="mt-2 flex items-end gap-2">
           <span className="text-2xl">📅</span>
           <span className="text-4xl font-black tabular-nums">{weekSessions}</span>
         </div>
-        <p className="mt-1 text-xs text-zinc-500">completed sessions</p>
+        <p className="mt-1 text-xs text-charcoal-500">completed sessions</p>
       </div>
     </div>
   );
