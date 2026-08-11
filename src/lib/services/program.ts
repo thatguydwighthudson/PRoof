@@ -1,4 +1,4 @@
-import { and, eq, isNotNull } from "drizzle-orm";
+import { and, eq, isNotNull, isNull } from "drizzle-orm";
 import { db } from "@/lib/db";
 import {
   userPrograms,
@@ -269,6 +269,73 @@ export async function advanceProgramDay(programId: number) {
       currentWeek,
     })
     .where(eq(userPrograms.id, userProgram.id));
+}
+
+export async function getActiveProgramDays() {
+  const active = await getActiveUserProgram();
+  if (!active) return null;
+
+  const days = await db
+    .select({
+      dayNumber: programDays.dayNumber,
+      label: programDays.label,
+      restDay: programDays.restDay,
+      planName: workoutPlans.name,
+    })
+    .from(programDays)
+    .leftJoin(workoutPlans, eq(programDays.planId, workoutPlans.id))
+    .where(eq(programDays.programId, active.program.id))
+    .orderBy(programDays.dayNumber);
+
+  return {
+    currentWeek: active.userProgram.currentWeek,
+    nextDayNumber: active.userProgram.nextDayNumber,
+    days,
+  };
+}
+
+/** Drop unfinished sessions so Today shows Start, not Resume. */
+async function abandonIncompleteSessions(userId: number) {
+  await db
+    .delete(workoutSessions)
+    .where(
+      and(
+        eq(workoutSessions.userId, userId),
+        isNull(workoutSessions.endedAt)
+      )
+    );
+}
+
+/** Reset active program to Week 1 on a chosen day. Keeps completed session history. */
+export async function resetProgramToWeek1(dayNumber = 1) {
+  const active = await getActiveUserProgram();
+  if (!active) return null;
+
+  const { userProgram, program } = active;
+  const [day] = await db
+    .select({ dayNumber: programDays.dayNumber })
+    .from(programDays)
+    .where(
+      and(
+        eq(programDays.programId, program.id),
+        eq(programDays.dayNumber, dayNumber)
+      )
+    )
+    .limit(1);
+
+  if (!day) return { error: "invalid_day" as const };
+
+  await abandonIncompleteSessions(userProgram.userId);
+
+  await db
+    .update(userPrograms)
+    .set({
+      currentWeek: 1,
+      nextDayNumber: dayNumber,
+    })
+    .where(eq(userPrograms.id, userProgram.id));
+
+  return { currentWeek: 1, nextDayNumber: dayNumber };
 }
 
 export { num };

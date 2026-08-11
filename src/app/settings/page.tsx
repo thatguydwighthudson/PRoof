@@ -9,6 +9,7 @@ import { Card } from "@/components/ui/card";
 import { SectionLabel } from "@/components/ui/section-label";
 import { cn } from "@/lib/utils";
 import { AccountSettings } from "@/components/settings/account-settings";
+import { ProgramSettings } from "@/components/settings/program-settings";
 
 export default function SettingsPage() {
   const { preferredUnit, setUnit } = useUser();
@@ -121,6 +122,8 @@ export default function SettingsPage() {
           Enable push notifications
         </Button>
       </Card>
+
+      <ProgramSettings />
 
       <Card>
         <SectionLabel>Export</SectionLabel>
